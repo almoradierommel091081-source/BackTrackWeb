@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BackTrack System - Dashboard</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <img src="/images/backtrack-logo.png" alt="BackTrack Logo" class="logo-image">
+
+        <div class="brand-text">
+            <h2>BackTrack</h2>
+            <span>System</span>
+        </div>
+
+        <nav>
+            <a href="#" class="nav-item active">
+                <span>▣</span>
+                Dashboard
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>📦</span>
+                Products
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>🛒</span>
+                Sales
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>👥</span>
+                Customers
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>📋</span>
+                Transactions
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>📊</span>
+                Reports
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="#" class="nav-item">
+                <span>⚙</span>
+                Settings
+            </a>
+
+            <a href="/logout" class="nav-item logout">
+                <span>↪</span>
+                Logout
+
+            </a>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome back to BackTrack System</p>
+            </div>
+
+            <div class="user-area">
+                <div class="notification">🔔</div>
+
+                <div class="user">
+                    <div class="avatar">A</div>
+                    <div>
+                        <strong>Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+            </div>
+
+        </header>
+
+
+        <!-- Dashboard Cards -->
+        <section class="dashboard-cards">
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📦</span>
+                    <span class="card-title">Products</span>
+                </div>
+
+                <h2>1,248</h2>
+                <p class="positive">+12% from last week</p>
+            </div>
+
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💰</span>
+                    <span class="card-title">Sales</span>
+                </div>
+
+                <h2>₱84,520</h2>
+                <p class="positive">+8% from last week</p>
+            </div>
+
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">👥</span>
+                    <span class="card-title">Customers</span>
+                </div>
+
+                <h2>356</h2>
+                <p class="positive">+5% from last week</p>
+            </div>
+
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <span class="card-title">Transactions</span>
+                </div>
+
+                <h2>2,540</h2>
+                <p class="positive">+15% from last week</p>
+            </div>
+
+        </section>
+
+
+        <!-- Bottom Dashboard -->
+        <section class="dashboard-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Recent Transactions</h2>
+                    <a href="#">View All</a>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr>
+                            <td>#TRX-1001</td>
+                            <td>Juan Dela Cruz</td>
+                            <td>₱2,450</td>
+                            <td><span class="status completed">Completed</span></td>
+                        </tr>
+
+                        <tr>
+                            <td>#TRX-1002</td>
+                            <td>Maria Santos</td>
+                            <td>₱1,850</td>
+                            <td><span class="status completed">Completed</span></td>
+                        </tr>
+
+                        <tr>
+                            <td>#TRX-1003</td>
+                            <td>Pedro Garcia</td>
+                            <td>₱3,200</td>
+                            <td><span class="status pending">Pending</span></td>
+                        </tr>
+
+                        <tr>
+                            <td>#TRX-1004</td>
+                            <td>Ana Reyes</td>
+                            <td>₱980</td>
+                            <td><span class="status completed">Completed</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <div class="panel quick-panel">
+
+                <div class="panel-header">
+                    <h2>Quick Actions</h2>
+                </div>
+
+                <button class="action-button">
+                    <span>＋</span>
+                    Add Product
+                </button>
+
+                <button class="action-button">
+                    <span>＋</span>
+                    New Sale
+                </button>
+
+                <button class="action-button">
+                    <span>👤</span>
+                    Add Customer
+                </button>
+
+                <button class="action-button">
+                    <span>📊</span>
+                    View Reports
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
