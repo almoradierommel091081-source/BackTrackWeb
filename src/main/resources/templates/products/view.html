@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Product details')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('products')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                ${product.name},
+                'Product details, stock and inventory history')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="page-actions" style="margin-bottom:18px">
+            <a class="btn btn-primary" th:href="@{/sales/new}">Sell this product</a>
+            <a class="btn btn-secondary" th:if="${isOwner}"
+               th:href="@{/products/{id}/edit(id=${product.id})}">Edit</a>
+
+            <form th:if="${isOwner and !product.archived}" method="post"
+                  th:action="@{/products/{id}/archive(id=${product.id})}"
+                  onsubmit="return confirm('Archive this product? Sales history is kept.');">
+                <button class="btn btn-danger" type="submit">Archive</button>
+            </form>
+
+            <form th:if="${isOwner and product.archived}" method="post"
+                  th:action="@{/products/{id}/restore(id=${product.id})}">
+                <button class="btn btn-secondary" type="submit">Restore product</button>
+            </form>
+
+            <a class="btn btn-secondary" th:href="@{/products}">Back to list</a>
+        </div>
+
+        <div class="cards-3">
+            <div class="mini-card">
+                <div class="label">Stock on hand</div>
+                <div class="value" th:classappend="${product.lowStock} ? 'low'"
+                     th:text="${product.stockQuantity}">0</div>
+                <div class="muted" th:if="${product.lowStock}">At or below minimum level</div>
+            </div>
+
+            <div class="mini-card">
+                <div class="label">Selling price</div>
+                <div class="value" th:text="${fmt.money(product.sellingPrice)}">0.00</div>
+            </div>
+
+            <div class="mini-card">
+                <div class="label">Cost price</div>
+                <div class="value" th:text="${fmt.money(product.costPrice)}">0.00</div>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Inventory history</h2>
+                    <span class="muted" th:text="${#lists.size(movements)} + ' movement(s)'">0</span>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(movements)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Type</th>
+                            <th class="num">Change</th>
+                            <th class="num">Stock after</th>
+                            <th>Reason</th>
+                            <th>By</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="movement : ${movements}">
+                            <td th:text="${fmt.dateTime(movement.createdAt)}">Date</td>
+                            <td th:text="${#strings.capitalize(#strings.toLowerCase(movement.type.name()))}">Type</td>
+                            <td class="num" th:text="${movement.quantityChange > 0 ? '+' + movement.quantityChange : movement.quantityChange}">0</td>
+                            <td class="num" th:text="${movement.resultingStock}">0</td>
+                            <td th:text="${movement.reason} ?: '—'">Reason</td>
+                            <td th:text="${movement.performedBy != null} ? ${movement.performedBy.fullName} : 'System'">User</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(movements)}">
+                    <strong>No stock movements yet</strong>
+                    Adjustments and sales will be recorded here permanently.
+                </div>
+            </div>
+
+            <div>
+                <div class="panel" style="margin-bottom:20px">
+                    <div class="panel-header">
+                        <h2>Product information</h2>
+                    </div>
+
+                    <dl class="detail-list">
+                        <dt>SKU</dt>
+                        <dd th:text="${product.sku}">SKU</dd>
+
+                        <dt>Category</dt>
+                        <dd th:text="${product.category != null} ? ${product.category.name} : '—'">—</dd>
+
+                        <dt>Minimum stock</dt>
+                        <dd th:text="${product.minStockLevel}">0</dd>
+
+                        <dt>Description</dt>
+                        <dd th:text="${product.description} ?: '—'">—</dd>
+
+                        <dt>Status</dt>
+                        <dd>
+                            <span class="badge" th:classappend="${product.archived} ? 'badge-archived' : 'badge-active'"
+                                  th:text="${product.archived} ? 'Archived' : 'Active'">Active</span>
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="panel" th:if="${isOwner}">
+                    <div class="panel-header">
+                        <h2>Stock adjustment</h2>
+                    </div>
+
+                    <form method="post" th:action="@{/products/{id}/stock(id=${product.id})}"
+                          th:object="${stockAdjustForm}">
+
+                        <div class="field">
+                            <label for="adjustment">Quantity to add or remove *</label>
+                            <input type="number" id="adjustment" th:field="*{adjustment}"
+                                   placeholder="e.g. 20 to add, -3 to remove">
+                            <span class="hint">Positive numbers add stock, negative numbers remove it.</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="reason">Reason *</label>
+                            <input type="text" id="reason" th:field="*{reason}"
+                                   placeholder="e.g. Delivery from supplier, damaged items">
+                        </div>
+
+                        <div class="form-actions" style="margin-top:14px">
+                            <button class="btn btn-primary" type="submit">Update stock</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

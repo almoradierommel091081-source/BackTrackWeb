@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1730">
+    <title>BackTrack - Something went wrong</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<main class="error-page">
+    <div class="error-card">
+        <img src="/images/backtrack-logo.png" alt="BackTrack">
+        <div class="error-code">500</div>
+        <h1 th:text="${message} ?: 'Something went wrong while processing that request'">
+            Something went wrong while processing that request
+        </h1>
+        <p>The details were written to the application log.</p>
+        <div class="error-actions">
+            <a class="btn btn-primary" th:href="@{/dashboard}">Back to dashboard</a>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

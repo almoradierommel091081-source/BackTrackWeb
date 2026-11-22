@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Accounts')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('users')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Accounts', 'Owner and employee accounts that can log in')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="page-actions" style="margin-bottom:18px">
+            <a class="btn btn-primary" th:href="@{/users/new}">+ Add account</a>
+        </div>
+
+        <div class="panel">
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Full name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Can manage customers</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.username}">username</td>
+                        <td th:text="${user.fullName}">Full name</td>
+                        <td th:text="${user.email} ?: '—'">—</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${user.owner} ? 'badge-owner' : 'badge-employee'"
+                                  th:text="${user.owner} ? 'Owner' : 'Employee'">Employee</span>
+                        </td>
+                        <td th:text="${user.owner ? 'Yes (owner)' : (user.canManageCustomers ? 'Yes' : 'No')}">No</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${user.active} ? 'badge-active' : 'badge-inactive'"
+                                  th:text="${user.active} ? 'Active' : 'Deactivated'">Active</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <a class="btn btn-small btn-secondary"
+                                   th:href="@{/users/{id}/edit(id=${user.id})}">Edit</a>
+
+                                <form method="post" th:action="@{/users/{id}/toggle(id=${user.id})}"
+                                      th:if="${currentUser == null or currentUser.id != user.id}">
+                                    <button class="btn btn-small"
+                                            th:classappend="${user.active} ? 'btn-danger' : 'btn-secondary'"
+                                            type="submit"
+                                            th:text="${user.active} ? 'Deactivate' : 'Activate'">Deactivate</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="muted" style="margin-top:14px;font-size:13px">
+            Employees can work with products, sales and transactions. Only owners can manage accounts,
+            settings and reports, and only owners can cancel transactions.
+        </p>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

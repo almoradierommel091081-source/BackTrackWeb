@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Product categories')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('products')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Product categories', 'Group products so reports are easier to read')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="detail-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Categories</h2>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(categories)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="category : ${categories}">
+                            <td th:text="${category.name}">Name</td>
+                            <td>
+                                <form method="post" th:action="@{/products/categories/{id}/delete(id=${category.id})}"
+                                      onsubmit="return confirm('Delete this category?');">
+                                    <button class="btn btn-small btn-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(categories)}">
+                    <strong>No categories yet</strong>
+                    Add one on the right, then assign products to it.
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Add category</h2>
+                </div>
+
+                <form method="post" th:action="@{/products/categories}">
+                    <div class="field">
+                        <label for="name">Category name *</label>
+                        <input type="text" id="name" name="name" placeholder="e.g. Beverages" required>
+                    </div>
+
+                    <div class="form-actions" style="margin-top:14px">
+                        <button class="btn btn-primary" type="submit">Add category</button>
+                        <a class="btn btn-secondary" th:href="@{/products}">Back to products</a>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

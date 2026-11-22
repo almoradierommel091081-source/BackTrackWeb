@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Account')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('users')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                ${userForm.id == null} ? 'New account' : 'Edit account',
+                'Owners have full access, employees handle daily operations')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="form-card" method="post" th:object="${userForm}"
+              th:action="${userForm.id == null} ? @{/users} : @{/users/{id}(id=${userForm.id})}">
+
+            <div class="alert alert-error" th:if="${#fields.hasAnyErrors()}">
+                Please check the highlighted fields below.
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="username">Username *</label>
+                    <input type="text" id="username" th:field="*{username}" placeholder="e.g. maria">
+                    <span class="hint">Used to log in. Letters, numbers, dot, dash, underscore.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="fullName">Full name *</label>
+                    <input type="text" id="fullName" th:field="*{fullName}">
+                    <span class="error-text" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}">
+                    <span class="error-text" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="role">Role *</label>
+                    <select id="role" th:field="*{role}">
+                        <option th:each="role : ${roles}" th:value="${role}"
+                                th:text="${#strings.capitalize(#strings.toLowerCase(role.name()))}">Employee</option>
+                    </select>
+                    <span class="error-text" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="password" th:text="${passwordRequired} ? 'Password *' : 'New password'">Password</label>
+                    <input type="password" id="password" th:field="*{password}"
+                           th:required="${passwordRequired}" autocomplete="new-password">
+                    <span class="hint" th:if="${passwordRequired}">At least 8 characters.</span>
+                    <span class="hint" th:unless="${passwordRequired}">Leave blank to keep the current password.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input type="password" id="confirmPassword" th:field="*{confirmPassword}"
+                           th:required="${passwordRequired}" autocomplete="new-password">
+                    <span class="error-text" th:if="${#fields.hasErrors('confirmPassword')}"
+                          th:errors="*{confirmPassword}"></span>
+                </div>
+
+                <div class="field full">
+                    <label class="checkbox-row">
+                        <input type="checkbox" th:field="*{active}">
+                        Account is active (can log in)
+                    </label>
+
+                    <label class="checkbox-row" style="margin-top:10px">
+                        <input type="checkbox" th:field="*{canManageCustomers}">
+                        Employee may add and edit customers
+                    </label>
+                    <span class="hint">This setting only applies to employee accounts.</span>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save account</button>
+                <a class="btn btn-secondary" th:href="@{/users}">Cancel</a>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

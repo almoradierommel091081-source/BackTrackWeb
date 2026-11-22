@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Receipt')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('sale')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Receipt', 'Print this receipt or open the transaction later')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="receipt">
+
+            <h2 th:text="${settings.businessName}">Business name</h2>
+            <p class="center" th:text="${settings.address}" th:if="${settings.address}"></p>
+            <p class="center">
+                <span th:text="${settings.contactNumber}" th:if="${settings.contactNumber}"></span>
+                <span th:if="${settings.contactNumber != null and settings.email != null}"> · </span>
+                <span th:text="${settings.email}" th:if="${settings.email}"></span>
+            </p>
+
+            <hr>
+
+            <p class="center">
+                Sale <strong th:text="${sale.saleNumber}">S-000001</strong><br>
+                <span th:text="${fmt.dateTime(sale.createdAt)}">Date</span><br>
+                Cashier: <span th:text="${sale.cashier.fullName}">Cashier</span>
+            </p>
+
+            <p class="center">
+                Customer: <span th:text="${sale.customer != null} ? ${sale.customer.name} : 'Walk-in'">Walk-in</span>
+            </p>
+
+            <hr>
+
+            <table>
+                <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Price</th>
+                    <th class="num">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${sale.items}">
+                    <td th:text="${item.productName}">Item</td>
+                    <td class="num" th:text="${item.quantity}">1</td>
+                    <td class="num" th:text="${fmt.money(item.unitPrice)}">0.00</td>
+                    <td class="num" th:text="${fmt.money(item.lineTotal)}">0.00</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <hr>
+
+            <div class="line-total">
+                <span>Subtotal</span>
+                <span th:text="${fmt.money(sale.subtotal)}">0.00</span>
+            </div>
+            <div class="line-total" th:if="${sale.discountAmount.signum() > 0}">
+                <span>Discount</span>
+                <span th:text="'- ' + ${fmt.money(sale.discountAmount)}">0.00</span>
+            </div>
+            <div class="line-total grand">
+                <span>Total</span>
+                <span th:text="${fmt.money(sale.totalAmount)}">0.00</span>
+            </div>
+            <div class="line-total">
+                <span>Paid</span>
+                <span th:text="${fmt.money(sale.amountPaid)}">0.00</span>
+            </div>
+            <div class="line-total" th:if="${sale.changeAmount.signum() > 0}">
+                <span>Change</span>
+                <span th:text="${fmt.money(sale.changeAmount)}">0.00</span>
+            </div>
+            <div class="line-total" th:if="${sale.balance.signum() > 0}">
+                <span><strong>Balance</strong></span>
+                <span><strong th:text="${fmt.money(sale.balance)}">0.00</strong></span>
+            </div>
+
+            <p class="center" style="margin-top:16px">
+                <span class="badge"
+                      th:classappend="'badge-' + ${#strings.toLowerCase(sale.paymentStatus.name())}"
+                      th:text="${#strings.capitalize(#strings.toLowerCase(sale.paymentStatus.name()))}">Paid</span>
+            </p>
+
+            <hr>
+
+            <p class="center" th:text="${settings.receiptFooter}">Thank you!</p>
+        </div>
+
+        <div class="receipt-actions">
+            <button class="btn btn-primary" type="button" onclick="window.print()">Print receipt</button>
+            <a class="btn btn-secondary" th:href="@{/sales/new}">New sale</a>
+            <a class="btn btn-secondary" th:href="@{/transactions/{id}(id=${sale.id})}">Transaction details</a>
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

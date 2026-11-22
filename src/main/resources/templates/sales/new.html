@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('New sale')}"></head>
+
+<body class="pos-page">
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('sale')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('New sale', 'Tap products to build the cart, then take the payment')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="alert alert-info" th:if="${#lists.isEmpty(products)}">
+            There are no active products yet. An owner has to add products before a sale can be recorded.
+        </div>
+
+        <form method="post" th:action="@{/sales}" th:object="${saleForm}" id="sale-form">
+
+            <div class="pos-layout">
+
+                <!-- Product catalogue -->
+                <section class="panel pos-products" th:if="${!#lists.isEmpty(products)}">
+                    <div class="pos-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+                            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+                        </svg>
+                        <input type="search" id="product-search" placeholder="Search products by name or SKU">
+                    </div>
+
+                    <div class="product-grid" id="product-grid">
+                        <button type="button" class="product-tile" th:each="product : ${products}"
+                                th:attr="data-id=${product.id},
+                                         data-name=${product.name},
+                                         data-sku=${product.sku},
+                                         data-price=${product.sellingPrice},
+                                         data-stock=${product.stockQuantity}"
+                                th:disabled="${product.stockQuantity <= 0}">
+                            <span class="tile-thumb"
+                                  th:text="${#strings.toUpperCase(#strings.substring(product.name, 0, 2))}">PR</span>
+                            <strong th:text="${product.name}">Product</strong>
+                            <span class="tile-price" th:text="${fmt.money(product.sellingPrice)}">0.00</span>
+                            <span class="tile-stock"
+                                  th:classappend="${product.stockQuantity <= 0} ? 'out'"
+                                  th:text="${product.stockQuantity <= 0} ? 'Out of stock' : ${product.stockQuantity} + ' in stock'">
+                                0 in stock
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="empty-state" id="grid-empty" hidden>
+                        <strong>No product found</strong>
+                        Try a different name or SKU.
+                    </div>
+                </section>
+
+                <!-- Cart and payment -->
+                <section class="panel cart-panel">
+
+                    <div class="panel-header">
+                        <h2>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>
+                                <path d="M2 3h2.2l2.3 11.2a1.8 1.8 0 0 0 1.8 1.4h8.8a1.8 1.8 0 0 0 1.7-1.4L21 7H5.2"/>
+                            </svg>
+                            Current sale
+                        </h2>
+                        <button type="button" class="btn-link" id="clear-cart">Clear</button>
+                    </div>
+
+                    <div class="cart-lines" id="cart-lines"></div>
+
+                    <div class="cart-empty" id="cart-empty">
+                        Tap a product on the left to add it to this sale.
+                    </div>
+
+                    <div class="totals">
+                        <div class="row">
+                            <span>Subtotal</span>
+                            <span id="subtotal-display" th:text="${fmt.money(0)}">0.00</span>
+                        </div>
+                        <div class="row">
+                            <span>Discount</span>
+                            <span id="discount-display" th:text="${fmt.money(0)}">0.00</span>
+                        </div>
+                        <div class="row grand">
+                            <span>Total</span>
+                            <span id="total-display" th:text="${fmt.money(0)}">0.00</span>
+                        </div>
+                        <div class="row">
+                            <span>Change</span>
+                            <span id="change-display" th:text="${fmt.money(0)}">0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="pay-fields">
+                        <div class="field full">
+                            <label for="customerId">Customer</label>
+                            <select id="customerId" th:field="*{customerId}">
+                                <option value="">Walk-in customer</option>
+                                <option th:each="customer : ${customers}" th:value="${customer.id}"
+                                        th:text="${customer.name + (customer.phone != null ? ' - ' + customer.phone : '')}">
+                                    Customer
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="paymentMethod">Payment method *</label>
+                            <select id="paymentMethod" th:field="*{paymentMethod}">
+                                <option th:each="method : ${paymentMethods}" th:value="${method}"
+                                        th:text="${#strings.capitalize(#strings.toLowerCase(method.name()))}">CASH</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="discountAmount">Discount</label>
+                            <input type="number" id="discountAmount" step="0.01" min="0"
+                                   th:field="*{discountAmount}">
+                        </div>
+
+                        <div class="field">
+                            <label for="amountPaid">Amount paid</label>
+                            <input type="number" id="amountPaid" step="0.01" min="0" th:field="*{amountPaid}">
+                            <span class="hint">Leave 0 to save the sale as unpaid (utang).</span>
+                        </div>
+
+                        <div class="field full">
+                            <label for="notes">Notes</label>
+                            <input type="text" id="notes" th:field="*{notes}" placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-primary" type="submit" id="save-sale">Complete sale</button>
+                        <a class="btn btn-secondary" th:href="@{/transactions}">Cancel</a>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Android checkout bar -->
+            <div class="pos-checkout-bar">
+                <div class="bar-total">
+                    <small>Total to pay</small>
+                    <strong id="bar-total-display" th:text="${fmt.money(0)}">0.00</strong>
+                </div>
+                <button class="btn btn-primary" type="submit">Complete sale</button>
+            </div>
+
+        </form>
+
+        <!-- One cart line. app.js fills it in when a product is tapped. -->
+        <template id="cart-line-template">
+            <div class="cart-line">
+                <input type="hidden" class="line-product">
+                <span class="line-name"></span>
+                <span class="line-price"></span>
+                <div class="qty-box">
+                    <button type="button" class="qty-minus" aria-label="Decrease quantity">−</button>
+                    <input type="number" class="line-qty" min="1" step="1" value="1" aria-label="Quantity">
+                    <button type="button" class="qty-plus" aria-label="Increase quantity">+</button>
+                </div>
+                <button type="button" class="remove-line" aria-label="Remove product">✕</button>
+                <span class="line-amount"></span>
+            </div>
+        </template>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    // Currency label comes from the business settings.
+    window.backtrackCurrency = /*[[${settings.currency}]]*/ 'PHP';
+</script>
+</body>
+</html>

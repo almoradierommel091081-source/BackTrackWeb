@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Transactions')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('transactions')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Transactions', 'Every sale that was saved, including cancelled ones')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="toolbar" method="get" th:action="@{/transactions}">
+            <div class="field">
+                <label for="q">Search</label>
+                <input type="text" id="q" name="q" th:value="${q}" placeholder="Sale number or customer">
+            </div>
+
+            <div class="field">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option th:each="option : ${statuses}" th:value="${option}"
+                            th:text="${#strings.capitalize(#strings.toLowerCase(option.name()))}"
+                            th:selected="${status != null and status == option}">Status</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="from">From</label>
+                <input type="date" id="from" name="from" th:value="${from}">
+            </div>
+
+            <div class="field">
+                <label for="to">To</label>
+                <input type="date" id="to" name="to" th:value="${to}">
+            </div>
+
+            <button class="btn btn-secondary" type="submit">Filter</button>
+            <a class="btn btn-secondary" th:href="@{/transactions}">Clear</a>
+
+            <span style="flex:1"></span>
+
+            <a class="btn btn-primary" th:href="@{/sales/new}">+ New sale</a>
+        </form>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2 th:text="${#lists.size(sales)} + ' transaction(s)'">0 transactions</h2>
+            </div>
+
+            <div class="table-container" th:if="${!#lists.isEmpty(sales)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Sale no.</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Cashier</th>
+                        <th class="num">Total</th>
+                        <th class="num">Balance</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sale : ${sales}">
+                        <td>
+                            <a class="table-link" th:href="@{/transactions/{id}(id=${sale.id})}"
+                               th:text="${sale.saleNumber}">S-000001</a>
+                        </td>
+                        <td th:text="${fmt.dateTime(sale.createdAt)}">Date</td>
+                        <td th:text="${sale.customer != null} ? ${sale.customer.name} : 'Walk-in'">Walk-in</td>
+                        <td th:text="${sale.cashier.fullName}">Cashier</td>
+                        <td class="num" th:text="${fmt.money(sale.totalAmount)}">0.00</td>
+                        <td class="num" th:text="${fmt.money(sale.balance)}">0.00</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="'badge-' + ${#strings.toLowerCase(sale.paymentStatus.name())}"
+                                  th:text="${#strings.capitalize(#strings.toLowerCase(sale.paymentStatus.name()))}">Paid</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="'badge-' + ${#strings.toLowerCase(sale.status.name())}"
+                                  th:text="${#strings.capitalize(#strings.toLowerCase(sale.status.name()))}">Status</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(sales)}">
+                <strong>No transactions found</strong>
+                <span th:if="${q != null or status != null or from != null or to != null}">
+                    Nothing matches these filters.
+                </span>
+                <span th:if="${q == null and status == null and from == null and to == null}">
+                    Completed sales will appear here.
+                </span>
+                <div style="margin-top:14px">
+                    <a class="btn btn-primary" th:href="@{/sales/new}">Create a sale</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

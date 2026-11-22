@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Product')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('products')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                ${productForm.id == null} ? 'New product' : 'Edit product',
+                'Stock is changed through adjustments, never by editing this form')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="form-card" method="post" th:object="${productForm}"
+              th:action="${productForm.id == null} ? @{/products} : @{/products/{id}(id=${productForm.id})}">
+
+            <div class="alert alert-error" th:if="${#fields.hasAnyErrors()}">
+                Please check the highlighted fields below.
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="sku">SKU / product code *</label>
+                    <input type="text" id="sku" th:field="*{sku}" placeholder="e.g. DRK-001">
+                    <span class="hint">Letters, numbers, dot, dash and underscore only.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('sku')}" th:errors="*{sku}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="name">Product name *</label>
+                    <input type="text" id="name" th:field="*{name}" placeholder="e.g. Bottled Water 500ml">
+                    <span class="error-text" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </div>
+
+                <div class="field full">
+                    <label for="description">Description</label>
+                    <textarea id="description" th:field="*{description}"></textarea>
+                    <span class="error-text" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="categoryId">Category</label>
+                    <select id="categoryId" th:field="*{categoryId}">
+                        <option value="">No category</option>
+                        <option th:each="category : ${categories}" th:value="${category.id}"
+                                th:text="${category.name}">Category</option>
+                    </select>
+                    <span class="hint">Create categories from the Products page.</span>
+                </div>
+
+                <div class="field">
+                    <label for="minStockLevel">Minimum stock level *</label>
+                    <input type="number" id="minStockLevel" min="0" th:field="*{minStockLevel}">
+                    <span class="hint">The product is flagged when stock reaches this number.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('minStockLevel')}"
+                          th:errors="*{minStockLevel}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="costPrice">Cost price *</label>
+                    <input type="number" id="costPrice" step="0.01" min="0" th:field="*{costPrice}">
+                    <span class="error-text" th:if="${#fields.hasErrors('costPrice')}" th:errors="*{costPrice}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="sellingPrice">Selling price *</label>
+                    <input type="number" id="sellingPrice" step="0.01" min="0" th:field="*{sellingPrice}">
+                    <span class="error-text" th:if="${#fields.hasErrors('sellingPrice')}"
+                          th:errors="*{sellingPrice}"></span>
+                </div>
+
+                <div class="field" th:if="${productForm.id == null}">
+                    <label for="openingStock">Opening stock</label>
+                    <input type="number" id="openingStock" min="0" th:field="*{openingStock}">
+                    <span class="hint">Recorded in the inventory history as opening stock.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('openingStock')}"
+                          th:errors="*{openingStock}"></span>
+                </div>
+
+                <div class="field" th:if="${productForm.id != null}">
+                    <label>Stock</label>
+                    <span class="hint">Stock is not edited here. Use “Stock adjustment” on the product page,
+                        so every change is recorded in the inventory history.</span>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save product</button>
+                <a class="btn btn-secondary" th:href="@{/products}">Cancel</a>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

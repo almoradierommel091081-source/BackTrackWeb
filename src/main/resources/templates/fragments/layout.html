@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============================================================
+     Shared layout pieces used by every page of the system.
+     The sidebar, the Android top bar and the Android bottom
+     navigation all live here, so changing them once changes
+     every page.
+     ============================================================ -->
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1730">
+    <meta name="description" content="BackTrack Business Management System">
+    <title th:text="'BackTrack - ' + ${title}">BackTrack</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BackTrack">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<th:block th:fragment="sidebar(active)">
+
+<!-- Android top bar (sibling of the sidebar on purpose: a fixed element
+     inside the sliding sidebar would slide away with it). -->
+<div class="mobile-bar">
+        <button type="button" class="icon-btn" id="menu-toggle" aria-label="Open navigation">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+                <path d="M4 7h16M4 12h16M4 17h16"/>
+            </svg>
+        </button>
+
+        <div class="mobile-brand">
+            <img src="/images/backtrack-logo.png" alt="">
+            <div>
+                <strong>BackTrack</strong>
+                <small th:text="${settings.businessName}">Business</small>
+            </div>
+        </div>
+
+        <a class="notification" th:href="@{/products(lowStock=true)}" aria-label="Low stock products">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8">
+                <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/>
+                <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+            </svg>
+        </a>
+    </div>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar">
+
+    <a class="sidebar-logo" th:href="@{/dashboard}">
+        <img src="/images/backtrack-logo.png" alt="BackTrack" class="logo-image">
+    </a>
+
+    <div class="brand-text">
+        <h2 th:text="${settings.businessName}">BackTrack</h2>
+        <span>Business Management System</span>
+    </div>
+
+    <nav aria-label="Main navigation">
+        <a th:href="@{/dashboard}" class="nav-item"
+           th:classappend="${active == 'dashboard'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/>
+                </svg>
+            </span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a th:href="@{/sales/new}" class="nav-item"
+           th:classappend="${active == 'sale'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>
+                    <path d="M2 3h2.2l2.3 11.2a1.8 1.8 0 0 0 1.8 1.4h8.8a1.8 1.8 0 0 0 1.7-1.4L21 7H5.2"/>
+                </svg>
+            </span>
+            <span class="nav-label">New Sale</span>
+        </a>
+
+        <a th:href="@{/products}" class="nav-item"
+           th:classappend="${active == 'products'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 8.2v7.6a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4a2 2 0 0 1-1-1.7V8.2a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4a2 2 0 0 1 1 1.7Z"/>
+                    <path d="m3.4 7.3 8.6 5 8.6-5M12 21.5v-9.2"/>
+                </svg>
+            </span>
+            <span class="nav-label">Products</span>
+        </a>
+
+        <a th:href="@{/customers}" class="nav-item"
+           th:classappend="${active == 'customers'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/>
+                    <circle cx="9" cy="7.5" r="3.5"/>
+                    <path d="M22 20v-1.5a4 4 0 0 0-3-3.8M16.5 4.2a3.5 3.5 0 0 1 0 6.6"/>
+                </svg>
+            </span>
+            <span class="nav-label">Customers</span>
+        </a>
+
+        <a th:href="@{/transactions}" class="nav-item"
+           th:classappend="${active == 'transactions'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9.5 12h6M9.5 16.5h6"/>
+                </svg>
+            </span>
+            <span class="nav-label">Transactions</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/reports}" class="nav-item"
+           th:classappend="${active == 'reports'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="6" rx="1"/>
+                    <rect x="10.5" y="7" width="3.5" height="10" rx="1"/><rect x="16" y="4" width="3.5" height="13" rx="1"/>
+                </svg>
+            </span>
+            <span class="nav-label">Reports</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/users}" class="nav-item"
+           th:classappend="${active == 'users'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+                </svg>
+            </span>
+            <span class="nav-label">Employees</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a th:if="${isOwner}" th:href="@{/settings}" class="nav-item"
+           th:classappend="${active == 'settings'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 2.6 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9.5 4.1a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21.4 11a2 2 0 1 1 0 4Z"/>
+                </svg>
+            </span>
+            <span class="nav-label">Settings</span>
+        </a>
+
+        <a th:href="@{/profile/password}" class="nav-item"
+           th:classappend="${active == 'profile'} ? 'active'">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.4-8.4M16.5 4.5 20 8M14 7l3.5 3.5"/>
+                </svg>
+            </span>
+            <span class="nav-label">My Password</span>
+        </a>
+
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <button type="submit" class="nav-item logout">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <path d="M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Logout</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- Android bottom navigation -->
+<nav class="bottom-nav" aria-label="Quick navigation">
+        <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21v-8h6v8"/>
+            </svg>
+            <span>Home</span>
+        </a>
+        <a th:href="@{/sales/new}" th:classappend="${active == 'sale'} ? 'active'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>
+                <path d="M2 3h2.2l2.3 11.2a1.8 1.8 0 0 0 1.8 1.4h8.8a1.8 1.8 0 0 0 1.7-1.4L21 7H5.2"/>
+            </svg>
+            <span>Sales</span>
+        </a>
+        <a th:href="@{/products}" th:classappend="${active == 'products'} ? 'active'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 8.2v7.6a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4a2 2 0 0 1-1-1.7V8.2a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4a2 2 0 0 1 1 1.7Z"/>
+                <path d="m3.4 7.3 8.6 5 8.6-5M12 21.5v-9.2"/>
+            </svg>
+            <span>Products</span>
+        </a>
+        <a th:href="@{/customers}" th:classappend="${active == 'customers'} ? 'active'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7.5" r="3.5"/>
+            </svg>
+            <span>Customers</span>
+        </a>
+        <button type="button" id="more-toggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+        <span>More</span>
+    </button>
+</nav>
+
+</th:block>
+
+<header class="topbar" th:fragment="topbar(title, subtitle)">
+    <div>
+        <h1 th:text="${title}">Page</h1>
+        <p th:text="${subtitle}">Subtitle</p>
+    </div>
+
+    <div class="topbar-tools">
+        <div class="user-area">
+            <a class="notification" th:href="@{/products(lowStock=true)}" title="Products that need restocking">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8">
+                    <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/>
+                    <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+                </svg>
+                <span class="dot" th:if="${stats != null and stats.lowStockCount > 0}"
+                      th:text="${stats.lowStockCount}">1</span>
+            </a>
+
+            <div class="user">
+                <div class="avatar"
+                     th:text="${currentUser != null} ? ${#strings.toUpperCase(#strings.substring(currentUser.fullName, 0, 1))} : '?'">A</div>
+                <div>
+                    <strong th:text="${currentUser != null} ? ${currentUser.fullName} : 'Guest'">Admin</strong>
+                    <small th:text="${currentUser != null and currentUser.owner} ? 'Owner' : 'Employee'">Role</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div th:fragment="flash" class="flash-area">
+    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+    <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script src="/js/app.js"></script>
+</th:block>
+
+</body>
+</html>

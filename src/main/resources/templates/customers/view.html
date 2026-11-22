@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customer details')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                ${customer.name},
+                'Customer details and purchase history')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="page-actions" style="margin-bottom:18px">
+            <a class="btn btn-primary" th:href="@{/sales/new(customerId=${customer.id})}">New sale for this customer</a>
+            <a class="btn btn-secondary" th:if="${canManageCustomers}"
+               th:href="@{/customers/{id}/edit(id=${customer.id})}">Edit</a>
+
+            <form th:if="${canManageCustomers and !customer.archived}" method="post"
+                  th:action="@{/customers/{id}/archive(id=${customer.id})}"
+                  onsubmit="return confirm('Archive this customer? Their past sales are kept.');">
+                <button class="btn btn-danger" type="submit">Archive</button>
+            </form>
+
+            <form th:if="${canManageCustomers and customer.archived}" method="post"
+                  th:action="@{/customers/{id}/restore(id=${customer.id})}">
+                <button class="btn btn-secondary" type="submit">Restore customer</button>
+            </form>
+
+            <a class="btn btn-secondary" th:href="@{/customers}">Back to list</a>
+        </div>
+
+        <div class="detail-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Purchase history</h2>
+                    <span class="muted" th:text="${#lists.size(history)} + ' transaction(s)'">0</span>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(history)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Sale no.</th>
+                            <th>Date</th>
+                            <th class="num">Total</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="sale : ${history}">
+                            <td>
+                                <a class="table-link" th:href="@{/transactions/{id}(id=${sale.id})}"
+                                   th:text="${sale.saleNumber}">S-000001</a>
+                            </td>
+                            <td th:text="${fmt.dateTime(sale.createdAt)}">Date</td>
+                            <td class="num" th:text="${fmt.money(sale.totalAmount)}">0.00</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="'badge-' + ${#strings.toLowerCase(sale.status.name())}"
+                                      th:text="${#strings.capitalize(#strings.toLowerCase(sale.status.name()))}">Status</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(history)}">
+                    <strong>No purchases yet</strong>
+                    Sales recorded for this customer will appear here.
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Customer information</h2>
+                </div>
+
+                <dl class="detail-list">
+                    <dt>Name</dt>
+                    <dd th:text="${customer.name}">Name</dd>
+
+                    <dt>Contact number</dt>
+                    <dd th:text="${customer.phone} ?: '—'">—</dd>
+
+                    <dt>Email</dt>
+                    <dd th:text="${customer.email} ?: '—'">—</dd>
+
+                    <dt>Address</dt>
+                    <dd th:text="${customer.address} ?: '—'">—</dd>
+
+                    <dt>Notes</dt>
+                    <dd th:text="${customer.notes} ?: '—'">—</dd>
+
+                    <dt>Status</dt>
+                    <dd>
+                        <span class="badge" th:classappend="${customer.archived} ? 'badge-archived' : 'badge-active'"
+                              th:text="${customer.archived} ? 'Archived' : 'Active'">Active</span>
+                    </dd>
+
+                    <dt>Customer since</dt>
+                    <dd th:text="${fmt.date(customer.createdAt)}">Date</dd>
+
+                    <dt>Total spent</dt>
+                    <dd th:text="${fmt.money(totalSpent)}">0.00</dd>
+                </dl>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

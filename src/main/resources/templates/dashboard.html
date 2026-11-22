@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+
+<body>
+
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('dashboard')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Dashboard', 'A live summary of your business, straight from the database')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <!-- Welcome banner -->
+        <section class="welcome">
+            <div>
+                <span class="welcome-badge">Overview</span>
+                <h2 th:text="${currentUser != null} ? 'Welcome back, ' + ${currentUser.fullName} + '!' : 'Welcome!'">
+                    Welcome back!
+                </h2>
+                <p th:text="'Here is what is happening at ' + ${settings.businessName} + ' today.'">
+                    Here is what is happening today.
+                </p>
+            </div>
+
+            <div class="welcome-art" aria-hidden="true">
+                <svg viewBox="0 0 200 100" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="3">
+                    <path d="M8 88h184" stroke="rgba(255,255,255,.35)"/>
+                    <path d="M18 74l34-16 32 12 34-26 30 14 32-26" stroke-linejoin="round" stroke-linecap="round"/>
+                    <circle cx="52" cy="58" r="4.5" fill="rgba(255,255,255,.9)" stroke="none"/>
+                    <circle cx="118" cy="44" r="4.5" fill="rgba(255,255,255,.9)" stroke="none"/>
+                    <circle cx="180" cy="18" r="4.5" fill="rgba(255,255,255,.9)" stroke="none"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Main numbers -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 8.2v7.6a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4a2 2 0 0 1-1-1.7V8.2a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4a2 2 0 0 1 1 1.7Z"/>
+                            <path d="m3.4 7.3 8.6 5 8.6-5M12 21.5v-9.2"/>
+                        </svg>
+                    </span>
+                    <span class="stat-label">Total products</span>
+                </div>
+                <div class="stat-value" th:text="${fmt.number(stats.totalProducts)}">0</div>
+                <div class="stat-foot">
+                    <span class="pill" th:classappend="${stats.lowStockCount > 0} ? 'amber' : 'green'"
+                          th:text="${stats.lowStockCount > 0} ? ${fmt.number(stats.lowStockCount)} + ' need restocking' : 'Stock healthy'">
+                        Stock healthy
+                    </span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/>
+                            <circle cx="9" cy="7.5" r="3.5"/>
+                            <path d="M22 20v-1.5a4 4 0 0 0-3-3.8M16.5 4.2a3.5 3.5 0 0 1 0 6.6"/>
+                        </svg>
+                    </span>
+                    <span class="stat-label">Total customers</span>
+                </div>
+                <div class="stat-value" th:text="${fmt.number(stats.totalCustomers)}">0</div>
+                <div class="stat-foot">Walk-in sales are not counted</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 6.5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </span>
+                    <span class="stat-label">Total revenue</span>
+                </div>
+                <div class="stat-value" th:text="${fmt.money(stats.revenueTotal)}">0.00</div>
+                <div class="stat-foot" th:text="'This month: ' + ${fmt.money(stats.revenueThisMonth)}">This month</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2h12l1 5H5z"/><path d="M5 7h14l-1 15H6z"/><path d="M9 12h6"/>
+                        </svg>
+                    </span>
+                    <span class="stat-label">Transactions today</span>
+                </div>
+                <div class="stat-value" th:text="${fmt.number(stats.transactionsToday)}">0</div>
+                <div class="stat-foot" th:text="'Sales today: ' + ${fmt.money(stats.revenueToday)}">Today</div>
+            </div>
+        </section>
+
+        <!-- Chart and low stock -->
+        <section class="dashboard-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/>
+                        </svg>
+                        Sales overview
+                    </h2>
+                    <a th:href="@{/reports}">Last 7 days</a>
+                </div>
+
+                <div class="chart-wrap" id="sales-chart"
+                     th:attr="data-currency=${settings.currency}">
+                    <div class="chart-points" hidden>
+                        <span th:each="day : ${weekDaily}"
+                              th:attr="data-label=${#temporals.format(day.date, 'EEE')},
+                                       data-date=${fmt.date(day.date)},
+                                       data-value=${day.revenue}"></span>
+                    </div>
+                </div>
+
+                <div class="chart-legend">
+                    <span><i></i>Revenue per day</span>
+                    <span th:text="'Week total: ' + ${fmt.money(stats.revenueThisWeek)}">Week total</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 2.5 20h19z"/><path d="M12 9v5M12 17.2v.1"/>
+                        </svg>
+                        Low stock alert
+                    </h2>
+                    <a th:href="@{/products(lowStock=true)}">View all</a>
+                </div>
+
+                <div class="alert-list" th:if="${!#lists.isEmpty(lowStockProducts)}">
+                    <a class="alert-row" th:each="product, st : ${lowStockProducts}"
+                       th:if="${st.count <= 5}"
+                       th:href="@{/products/{id}(id=${product.id})}">
+                        <span class="row-icon"
+                              th:text="${#strings.toUpperCase(#strings.substring(product.name, 0, 1))}">P</span>
+                        <span class="row-main">
+                            <strong th:text="${product.name}">Product</strong>
+                            <small th:text="'SKU ' + ${product.sku}">SKU</small>
+                        </span>
+                        <span class="pill red" th:text="${product.stockQuantity} + ' left'">0 left</span>
+                    </a>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(lowStockProducts)}">
+                    <strong>Stock levels are healthy</strong>
+                    No product is at or below its minimum level.
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent transactions and quick actions -->
+        <section class="dashboard-grid">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9.5 12h6M9.5 16.5h6"/>
+                        </svg>
+                        Recent transactions
+                    </h2>
+                    <a th:href="@{/transactions}">View all</a>
+                </div>
+
+                <div class="recent-list" th:if="${!#lists.isEmpty(recentSales)}">
+                    <a class="recent-row" th:each="sale : ${recentSales}"
+                       th:href="@{/transactions/{id}(id=${sale.id})}">
+                        <span class="row-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                                 stroke-linejoin="round" style="width:18px;height:18px">
+                                <path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9.5 12h6M9.5 16.5h6"/>
+                            </svg>
+                        </span>
+                        <span class="row-main">
+                            <strong th:text="${sale.saleNumber}">S-000001</strong>
+                            <small th:text="${sale.customer != null} ? ${sale.customer.name} + ' · ' + ${sale.cashier.fullName} : 'Walk-in · ' + ${sale.cashier.fullName}">
+                                Walk-in
+                            </small>
+                        </span>
+                        <span class="badge"
+                              th:classappend="'badge-' + ${#strings.toLowerCase(sale.status.name())}"
+                              th:text="${#strings.capitalize(#strings.toLowerCase(sale.status.name()))}">Paid</span>
+                        <span class="row-amount" th:text="${fmt.money(sale.totalAmount)}">0.00</span>
+                    </a>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(recentSales)}">
+                    <strong>No sales yet</strong>
+                    Record your first sale and it will appear here.
+                    <div style="margin-top:14px">
+                        <a class="btn btn-primary" th:href="@{/sales/new}">Create a sale</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m13 2-9 12h7l-1 8 9-12h-7z"/>
+                        </svg>
+                        Quick actions
+                    </h2>
+                </div>
+
+                <div class="quick-grid">
+                    <a class="quick-tile" th:href="@{/sales/new}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>
+                            <path d="M2 3h2.2l2.3 11.2a1.8 1.8 0 0 0 1.8 1.4h8.8a1.8 1.8 0 0 0 1.7-1.4L21 7H5.2"/>
+                        </svg>
+                        <span>New Sale</span>
+                    </a>
+
+                    <a class="quick-tile" th:if="${isOwner}" th:href="@{/products/new}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 8.2v7.6a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4a2 2 0 0 1-1-1.7V8.2a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4a2 2 0 0 1 1 1.7Z"/>
+                            <path d="M12 9v6M9 12h6"/>
+                        </svg>
+                        <span>Add Product</span>
+                    </a>
+
+                    <a class="quick-tile" th:if="${canManageCustomers}" th:href="@{/customers/new}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+                        </svg>
+                        <span>Add Customer</span>
+                    </a>
+
+                    <a class="quick-tile" th:if="${isOwner}" th:href="@{/reports}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="6" rx="1"/>
+                            <rect x="10.5" y="7" width="3.5" height="10" rx="1"/><rect x="16" y="4" width="3.5" height="13" rx="1"/>
+                        </svg>
+                        <span>View Reports</span>
+                    </a>
+
+                    <a class="quick-tile" th:href="@{/transactions}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9.5 12h6M9.5 16.5h6"/>
+                        </svg>
+                        <span>Transactions</span>
+                    </a>
+
+                    <a class="quick-tile" th:href="@{/products(lowStock=true)}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 2.5 20h19z"/><path d="M12 9v5M12 17.2v.1"/>
+                        </svg>
+                        <span>Low Stock</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Extra numbers -->
+        <section class="cards-4">
+            <div class="mini-card">
+                <div class="label">Revenue this month</div>
+                <div class="value" th:text="${fmt.money(stats.revenueThisMonth)}">0.00</div>
+            </div>
+
+            <div class="mini-card">
+                <div class="label">Collected this month</div>
+                <div class="value" th:text="${fmt.money(stats.collectedThisMonth)}">0.00</div>
+            </div>
+
+            <div class="mini-card">
+                <div class="label">Completed sales</div>
+                <div class="value" th:text="${fmt.number(stats.completedSales)}">0</div>
+            </div>
+
+            <div class="mini-card">
+                <div class="label">Low stock products</div>
+                <div class="value" th:classappend="${stats.lowStockCount > 0} ? 'low'"
+                     th:text="${fmt.number(stats.lowStockCount)}">0</div>
+            </div>
+        </section>
+
+        <!-- Best sellers -->
+        <section class="panel" th:if="${!#lists.isEmpty(weekTopProducts)}">
+            <div class="panel-header">
+                <h2>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>
+                    </svg>
+                    Best sellers this week
+                </h2>
+                <a th:href="@{/reports}">Open reports</a>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="num">Sold</th>
+                        <th class="num">Revenue</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${weekTopProducts}">
+                        <td th:text="${product.productName}">Product</td>
+                        <td class="num" th:text="${product.quantitySold}">0</td>
+                        <td class="num" th:text="${fmt.money(product.revenue)}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

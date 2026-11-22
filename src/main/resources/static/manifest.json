@@ -1,0 +1,53 @@
+{
+  "name": "BackTrack Business Management System",
+  "short_name": "BackTrack",
+  "description": "Sales, stock, customers and reports for your business.",
+  "id": "/dashboard",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#f4f6fb",
+  "theme_color": "#0b1730",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Sale",
+      "short_name": "Sale",
+      "url": "/sales/new"
+    },
+    {
+      "name": "Products",
+      "short_name": "Products",
+      "url": "/products"
+    },
+    {
+      "name": "Transactions",
+      "short_name": "Transactions",
+      "url": "/transactions"
+    }
+  ]
+}

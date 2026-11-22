@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reports')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('reports')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Reports', 'Sales, revenue, inventory and customer reports from real data')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="toolbar" method="get" th:action="@{/reports}">
+            <div class="field">
+                <label for="from">From</label>
+                <input type="date" id="from" name="from" th:value="${from}">
+            </div>
+
+            <div class="field">
+                <label for="to">To</label>
+                <input type="date" id="to" name="to" th:value="${to}">
+            </div>
+
+            <button class="btn btn-primary" type="submit">Update reports</button>
+
+            <span style="flex:1"></span>
+
+            <a class="btn btn-secondary"
+               th:href="@{/reports/sales.csv(from=${from}, to=${to})}">Export sales CSV</a>
+            <a class="btn btn-secondary" th:href="@{/reports/inventory.csv}">Export inventory CSV</a>
+            <a class="btn btn-secondary"
+               th:href="@{/reports/customers.csv(from=${from}, to=${to})}">Export customers CSV</a>
+            <button class="btn btn-secondary" type="button" onclick="window.print()">Print</button>
+        </form>
+
+        <div class="cards-4">
+            <div class="mini-card">
+                <div class="label">Revenue (not cancelled)</div>
+                <div class="value" th:text="${fmt.money(salesReport.totalRevenue)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Collected</div>
+                <div class="value" th:text="${fmt.money(salesReport.totalCollected)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Discounts given</div>
+                <div class="value" th:text="${fmt.money(salesReport.totalDiscount)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Transactions in range</div>
+                <div class="value" th:text="${#lists.size(salesReport.sales)}">0</div>
+            </div>
+        </div>
+
+        <!-- Sales report -->
+        <div class="panel" style="margin-bottom:20px">
+            <div class="panel-header">
+                <h2>Sales report</h2>
+                <span class="muted" th:text="${fmt.date(from)} + ' to ' + ${fmt.date(to)}">Range</span>
+            </div>
+
+            <div class="table-container" th:if="${!#lists.isEmpty(salesReport.sales)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Sale no.</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Cashier</th>
+                        <th>Status</th>
+                        <th class="num">Total</th>
+                        <th class="num">Paid</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sale : ${salesReport.sales}">
+                        <td>
+                            <a class="table-link" th:href="@{/transactions/{id}(id=${sale.id})}"
+                               th:text="${sale.saleNumber}">S-000001</a>
+                        </td>
+                        <td th:text="${fmt.dateTime(sale.createdAt)}">Date</td>
+                        <td th:text="${sale.customer != null} ? ${sale.customer.name} : 'Walk-in'">Walk-in</td>
+                        <td th:text="${sale.cashier.fullName}">Cashier</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="'badge-' + ${#strings.toLowerCase(sale.status.name())}"
+                                  th:text="${#strings.capitalize(#strings.toLowerCase(sale.status.name()))}">Status</span>
+                        </td>
+                        <td class="num" th:text="${fmt.money(sale.totalAmount)}">0.00</td>
+                        <td class="num" th:text="${fmt.money(sale.amountPaid)}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(salesReport.sales)}">
+                <strong>No sales in this date range</strong>
+                Change the dates above or record a sale first.
+            </div>
+        </div>
+
+        <div class="report-grid">
+
+            <!-- Daily revenue -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Revenue by day</h2>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="num">Sales</th>
+                            <th class="num">Revenue</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="day : ${salesReport.daily}">
+                            <td th:text="${fmt.date(day.date)}">Date</td>
+                            <td class="num" th:text="${day.saleCount}">0</td>
+                            <td class="num" th:text="${fmt.money(day.revenue)}">0.00</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top products -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Best selling products</h2>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(salesReport.topProducts)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="num">Sold</th>
+                            <th class="num">Revenue</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="product : ${salesReport.topProducts}">
+                            <td th:text="${product.productName}">Product</td>
+                            <td class="num" th:text="${product.quantitySold}">0</td>
+                            <td class="num" th:text="${fmt.money(product.revenue)}">0.00</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(salesReport.topProducts)}">
+                    <strong>Nothing sold in this range</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Inventory report -->
+        <div class="cards-3">
+            <div class="mini-card">
+                <div class="label">Units in stock</div>
+                <div class="value" th:text="${fmt.number(inventoryReport.totalUnits)}">0</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Stock value (cost)</div>
+                <div class="value" th:text="${fmt.money(inventoryReport.costValue)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Stock value (selling)</div>
+                <div class="value" th:text="${fmt.money(inventoryReport.retailValue)}">0.00</div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:20px">
+            <div class="panel-header">
+                <h2>Inventory report</h2>
+                <span class="muted" th:text="${#lists.size(inventoryReport.products)} + ' active product(s)'">0</span>
+            </div>
+
+            <div class="table-container" th:if="${!#lists.isEmpty(inventoryReport.products)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th class="num">Stock</th>
+                        <th class="num">Minimum</th>
+                        <th class="num">Cost</th>
+                        <th class="num">Selling</th>
+                        <th class="num">Stock value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${inventoryReport.products}">
+                        <td th:text="${product.sku}">SKU</td>
+                        <td th:text="${product.name}">Product</td>
+                        <td th:text="${product.category != null} ? ${product.category.name} : '—'">—</td>
+                        <td class="num" th:classappend="${product.lowStock} ? 'low'"
+                            th:text="${product.stockQuantity}">0</td>
+                        <td class="num" th:text="${product.minStockLevel}">0</td>
+                        <td class="num" th:text="${fmt.money(product.costPrice)}">0.00</td>
+                        <td class="num" th:text="${fmt.money(product.sellingPrice)}">0.00</td>
+                        <td class="num" th:text="${fmt.money(product.stockCostValue)}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(inventoryReport.products)}">
+                <strong>No products yet</strong>
+                Add products to see the inventory report.
+            </div>
+        </div>
+
+        <div class="report-grid">
+
+            <!-- Low stock -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Low stock report</h2>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(inventoryReport.lowStock)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="num">Stock</th>
+                            <th class="num">Minimum</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="product : ${inventoryReport.lowStock}">
+                            <td th:text="${product.name}">Product</td>
+                            <td class="num low" th:text="${product.stockQuantity}">0</td>
+                            <td class="num" th:text="${product.minStockLevel}">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(inventoryReport.lowStock)}">
+                    <strong>All stock levels are healthy</strong>
+                </div>
+            </div>
+
+            <!-- Customers -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Customer report</h2>
+                    <span class="muted" th:text="${#lists.size(customerReport)} + ' customer(s)'">0</span>
+                </div>
+
+                <div class="table-container" th:if="${!#lists.isEmpty(customerReport)}">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th class="num">Sales</th>
+                            <th class="num">Total spent</th>
+                            <th>Last purchase</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="customer : ${customerReport}">
+                            <td th:text="${customer.name}">Customer</td>
+                            <td class="num" th:text="${customer.saleCount}">0</td>
+                            <td class="num" th:text="${fmt.money(customer.totalSpent)}">0.00</td>
+                            <td th:text="${fmt.date(customer.lastPurchase)}">Date</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(customerReport)}">
+                    <strong>No customer purchases in this range</strong>
+                    Walk-in sales have no customer, so they are not listed here.
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

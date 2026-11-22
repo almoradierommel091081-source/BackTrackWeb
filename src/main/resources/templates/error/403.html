@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1730">
+    <title>BackTrack - Not allowed</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<main class="error-page">
+    <div class="error-card">
+        <img src="/images/backtrack-logo.png" alt="BackTrack">
+        <div class="error-code">403</div>
+        <h1>You do not have permission to do that</h1>
+        <p th:text="${message} ?: 'Ask the business owner if you need access to this part of the system.'">
+            Ask the business owner if you need access to this part of the system.
+        </p>
+        <div class="error-actions">
+            <a class="btn btn-primary" th:href="@{/dashboard}">Back to dashboard</a>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

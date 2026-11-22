@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Business settings')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('settings')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Business settings', 'These details appear on the dashboard, receipts and reports')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="form-card" method="post" th:action="@{/settings}" th:object="${businessSettings}">
+
+            <div class="form-grid">
+
+                <div class="field full">
+                    <label for="businessName">Business name *</label>
+                    <input type="text" id="businessName" th:field="*{businessName}" required>
+                </div>
+
+                <div class="field full">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" th:field="*{address}">
+                </div>
+
+                <div class="field">
+                    <label for="contactNumber">Contact number</label>
+                    <input type="text" id="contactNumber" th:field="*{contactNumber}">
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}">
+                </div>
+
+                <div class="field">
+                    <label for="currency">Currency *</label>
+                    <input type="text" id="currency" th:field="*{currency}" maxlength="10" required>
+                    <span class="hint">Code or symbol shown before amounts, e.g. PHP, USD, ₱.</span>
+                </div>
+
+                <div class="field">
+                    <label for="defaultMinStockLevel">Default minimum stock level</label>
+                    <input type="number" id="defaultMinStockLevel" min="0" th:field="*{defaultMinStockLevel}">
+                    <span class="hint">Used as the starting value for new products.</span>
+                </div>
+
+                <div class="field full">
+                    <label for="logoUrl">Logo URL</label>
+                    <input type="text" id="logoUrl" th:field="*{logoUrl}">
+                    <span class="hint">Default is the BackTrack logo: /images/backtrack-logo.png</span>
+                </div>
+
+                <div class="field full">
+                    <label for="receiptFooter">Receipt footer</label>
+                    <input type="text" id="receiptFooter" th:field="*{receiptFooter}">
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save settings</button>
+                <a class="btn btn-secondary" th:href="@{/dashboard}">Cancel</a>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customer')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                ${customer.id == null} ? 'New customer' : 'Edit customer',
+                'Contact details are used on receipts and reports')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="form-card" method="post" th:object="${customer}"
+              th:action="${customer.id == null} ? @{/customers} : @{/customers/{id}(id=${customer.id})}">
+
+            <div class="alert alert-error" th:if="${#fields.hasAnyErrors()}">
+                Please check the highlighted fields below.
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field full">
+                    <label for="name">Customer name *</label>
+                    <input type="text" id="name" th:field="*{name}" placeholder="e.g. Maria Santos">
+                    <span class="error-text" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="phone">Contact number</label>
+                    <input type="text" id="phone" th:field="*{phone}" placeholder="e.g. 0917 123 4567">
+                    <span class="hint">Must be unique: it prevents duplicate customers.</span>
+                    <span class="error-text" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}" placeholder="name@example.com">
+                    <span class="error-text" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                </div>
+
+                <div class="field full">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" th:field="*{address}" placeholder="Street, city">
+                    <span class="error-text" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+                </div>
+
+                <div class="field full">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" th:field="*{notes}" placeholder="Anything useful to remember"></textarea>
+                    <span class="error-text" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></span>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save customer</button>
+                <a class="btn btn-secondary" th:href="@{/customers}">Cancel</a>
+            </div>
+
+        </form>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

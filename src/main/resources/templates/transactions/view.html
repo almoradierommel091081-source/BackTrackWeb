@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Transaction details')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('transactions')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar(
+                'Transaction ' + ${sale.saleNumber},
+                ${fmt.dateTime(sale.createdAt)})}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="page-actions" style="margin-bottom:18px">
+            <a class="btn btn-secondary" th:href="@{/sales/{id}/receipt(id=${sale.id})}">Print receipt</a>
+            <a class="btn btn-secondary" th:href="@{/transactions}">Back to list</a>
+        </div>
+
+        <div class="alert alert-error" th:if="${sale.status.name() == 'CANCELLED'}">
+            This transaction was cancelled
+            <span th:if="${sale.cancelledBy != null}"
+                  th:text="' by ' + ${sale.cancelledBy.fullName}"></span>
+            <span th:if="${sale.cancelledAt != null}" th:text="' on ' + ${fmt.dateTime(sale.cancelledAt)}"></span>.
+            <span th:if="${sale.cancelReason}" th:text="'Reason: ' + ${sale.cancelReason}"></span>
+            Stock was returned to the products.
+        </div>
+
+        <div class="cards-4">
+            <div class="mini-card">
+                <div class="label">Total</div>
+                <div class="value" th:text="${fmt.money(sale.totalAmount)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Paid</div>
+                <div class="value" th:text="${fmt.money(sale.amountPaid)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Balance</div>
+                <div class="value" th:classappend="${sale.balance.signum() > 0} ? 'low'"
+                     th:text="${fmt.money(sale.balance)}">0.00</div>
+            </div>
+            <div class="mini-card">
+                <div class="label">Status</div>
+                <div class="value small">
+                    <span class="badge"
+                          th:classappend="'badge-' + ${#strings.toLowerCase(sale.status.name())}"
+                          th:text="${#strings.capitalize(#strings.toLowerCase(sale.status.name()))}">Status</span>
+                    <span class="badge"
+                          th:classappend="'badge-' + ${#strings.toLowerCase(sale.paymentStatus.name())}"
+                          th:text="${#strings.capitalize(#strings.toLowerCase(sale.paymentStatus.name()))}">Paid</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+
+            <div>
+                <div class="panel" style="margin-bottom:20px">
+                    <div class="panel-header">
+                        <h2>Items</h2>
+                        <span class="muted" th:text="${sale.totalQuantity} + ' item(s)'">0</span>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th class="num">Price</th>
+                                <th class="num">Qty</th>
+                                <th class="num">Amount</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${sale.items}">
+                                <td th:text="${item.productName}">Product</td>
+                                <td th:text="${item.sku}">SKU</td>
+                                <td class="num" th:text="${fmt.money(item.unitPrice)}">0.00</td>
+                                <td class="num" th:text="${item.quantity}">1</td>
+                                <td class="num" th:text="${fmt.money(item.lineTotal)}">0.00</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="totals">
+                        <div class="row">
+                            <span>Subtotal</span>
+                            <span th:text="${fmt.money(sale.subtotal)}">0.00</span>
+                        </div>
+                        <div class="row">
+                            <span>Discount</span>
+                            <span th:text="${fmt.money(sale.discountAmount)}">0.00</span>
+                        </div>
+                        <div class="row grand">
+                            <span>Total</span>
+                            <span th:text="${fmt.money(sale.totalAmount)}">0.00</span>
+                        </div>
+                        <div class="row" th:if="${sale.changeAmount.signum() > 0}">
+                            <span>Change given</span>
+                            <span th:text="${fmt.money(sale.changeAmount)}">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Payment history</h2>
+                    </div>
+
+                    <div class="table-container" th:if="${!#lists.isEmpty(sale.payments)}">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Method</th>
+                                <th class="num">Amount</th>
+                                <th>Recorded by</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="payment : ${sale.payments}">
+                                <td th:text="${fmt.dateTime(payment.paidAt)}">Date</td>
+                                <td th:text="${#strings.capitalize(#strings.toLowerCase(payment.method.name()))}">Cash</td>
+                                <td class="num" th:text="${fmt.money(payment.amount)}">0.00</td>
+                                <td th:text="${payment.recordedBy != null} ? ${payment.recordedBy.fullName} : '—'">—</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" th:if="${#lists.isEmpty(sale.payments)}">
+                        <strong>No payment received yet</strong>
+                        Use the form on the right when the customer pays.
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel" style="margin-bottom:20px">
+                    <div class="panel-header">
+                        <h2>Transaction information</h2>
+                    </div>
+
+                    <dl class="detail-list" style="grid-template-columns:120px 1fr">
+                        <dt>Sale no.</dt>
+                        <dd th:text="${sale.saleNumber}">S-000001</dd>
+
+                        <dt>Date</dt>
+                        <dd th:text="${fmt.dateTime(sale.createdAt)}">Date</dd>
+
+                        <dt>Customer</dt>
+                        <dd th:text="${sale.customer != null} ? ${sale.customer.name} : 'Walk-in'">Walk-in</dd>
+
+                        <dt>Cashier</dt>
+                        <dd th:text="${sale.cashier.fullName}">Cashier</dd>
+
+                        <dt>Method</dt>
+                        <dd th:text="${#strings.capitalize(#strings.toLowerCase(sale.paymentMethod.name()))}">Cash</dd>
+
+                        <dt>Notes</dt>
+                        <dd th:text="${sale.notes} ?: '—'">—</dd>
+                    </dl>
+                </div>
+
+                <div class="panel" style="margin-bottom:20px"
+                     th:if="${sale.balance.signum() > 0 and sale.status.name() != 'CANCELLED'}">
+                    <div class="panel-header">
+                        <h2>Record a payment</h2>
+                    </div>
+
+                    <form method="post" th:action="@{/transactions/{id}/payments(id=${sale.id})}"
+                          th:object="${paymentForm}">
+
+                        <div class="field">
+                            <label for="amount">Amount *</label>
+                            <input type="number" id="amount" step="0.01" min="0.01" th:field="*{amount}">
+                            <span class="hint" th:text="'Remaining balance: ' + ${fmt.money(sale.balance)}">Balance</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="method">Method *</label>
+                            <select id="method" th:field="*{method}">
+                                <option th:each="option : ${paymentMethods}" th:value="${option}"
+                                        th:text="${#strings.capitalize(#strings.toLowerCase(option.name()))}">Cash</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="note">Note</label>
+                            <input type="text" id="note" th:field="*{note}" placeholder="Optional">
+                        </div>
+
+                        <div class="form-actions" style="margin-top:14px">
+                            <button class="btn btn-primary" type="submit">Save payment</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel" th:if="${isOwner and sale.status.name() != 'CANCELLED'}">
+                    <div class="panel-header">
+                        <h2>Cancel transaction</h2>
+                    </div>
+
+                    <p class="muted" style="font-size:13px;margin-bottom:12px">
+                        Cancelling returns every item to stock. The transaction and its payments stay in the history.
+                    </p>
+
+                    <form method="post" th:action="@{/transactions/{id}/cancel(id=${sale.id})}"
+                          onsubmit="return confirm('Cancel this transaction and return the items to stock?');">
+                        <div class="field">
+                            <label for="reason">Reason *</label>
+                            <input type="text" id="reason" name="reason" required
+                                   placeholder="e.g. Customer changed their mind">
+                        </div>
+
+                        <div class="form-actions" style="margin-top:14px">
+                            <button class="btn btn-danger" type="submit">Cancel transaction</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

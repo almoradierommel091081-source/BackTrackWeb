@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customers')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Customers', 'Search, add and manage the people who buy from you')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <form class="toolbar" method="get" th:action="@{/customers}">
+            <div class="field">
+                <label for="q">Search</label>
+                <input type="text" id="q" name="q" th:value="${q}" placeholder="Name, phone or email">
+            </div>
+
+            <label class="checkbox-row">
+                <input type="checkbox" name="showArchived" value="true" th:checked="${showArchived}">
+                Show archived
+            </label>
+
+            <button class="btn btn-secondary" type="submit">Search</button>
+            <a class="btn btn-secondary" th:href="@{/customers}">Clear</a>
+
+            <span style="flex:1"></span>
+
+            <a class="btn btn-primary" th:if="${canManageCustomers}" th:href="@{/customers/new}">+ Add customer</a>
+        </form>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2 th:text="${#lists.size(customers)} + ' customer(s)'">0 customers</h2>
+            </div>
+
+            <div class="table-container" th:if="${!#lists.isEmpty(customers)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Contact number</th>
+                        <th>Email</th>
+                        <th>Address</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="customer : ${customers}">
+                        <td>
+                            <a class="table-link" th:href="@{/customers/{id}(id=${customer.id})}"
+                               th:text="${customer.name}">Name</a>
+                            <span class="badge badge-archived" th:if="${customer.archived}">Archived</span>
+                        </td>
+                        <td th:text="${customer.phone} ?: '—'">—</td>
+                        <td th:text="${customer.email} ?: '—'">—</td>
+                        <td th:text="${customer.address} ?: '—'">—</td>
+                        <td>
+                            <div class="table-actions">
+                                <a class="btn btn-small btn-secondary"
+                                   th:href="@{/customers/{id}(id=${customer.id})}">View</a>
+                                <a class="btn btn-small btn-secondary" th:if="${canManageCustomers}"
+                                   th:href="@{/customers/{id}/edit(id=${customer.id})}">Edit</a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(customers)}">
+                <strong>No customers found</strong>
+                <span th:if="${q != null}">Nothing matches “<span th:text="${q}"></span>”. Try another search.</span>
+                <span th:if="${q == null}">Add your first customer, or keep recording walk-in sales.</span>
+                <div style="margin-top:14px" th:if="${canManageCustomers and q == null}">
+                    <a class="btn btn-primary" th:href="@{/customers/new}">+ Add customer</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

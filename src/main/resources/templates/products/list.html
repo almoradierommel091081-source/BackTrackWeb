@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Products')}"></head>
+
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('products')}"></aside>
+
+    <main class="main-content">
+
+        <header th:replace="~{fragments/layout :: topbar('Products', 'Catalogue, prices and stock levels')}"></header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="page-actions" style="margin-bottom:16px">
+            <a class="btn btn-secondary" th:if="${isOwner}" th:href="@{/products/categories}">Categories</a>
+            <a class="btn btn-primary" th:if="${isOwner}" th:href="@{/products/new}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add product
+            </a>
+        </div>
+
+        <form class="toolbar" method="get" th:action="@{/products}">
+            <div class="field search-field">
+                <label for="q">Search</label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+                    <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+                </svg>
+                <input type="search" id="q" name="q" th:value="${q}" placeholder="Product name or SKU">
+            </div>
+
+            <div class="field">
+                <label for="categoryId">Category</label>
+                <select id="categoryId" name="categoryId">
+                    <option value="">All categories</option>
+                    <option th:each="category : ${categories}" th:value="${category.id}"
+                            th:text="${category.name}"
+                            th:selected="${categoryId != null and categoryId == category.id}">Category</option>
+                </select>
+            </div>
+
+            <label class="checkbox-row">
+                <input type="checkbox" name="lowStock" value="true" th:checked="${lowStock}">
+                Low stock only
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" name="showArchived" value="true" th:checked="${showArchived}">
+                Show archived
+            </label>
+
+            <button class="btn btn-primary" type="submit">Filter</button>
+            <a class="btn btn-secondary" th:href="@{/products}">Clear</a>
+        </form>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2 th:text="${#lists.size(products)} + ' product(s)'">0 products</h2>
+                <a th:href="@{/products(lowStock=true)}">Show low stock</a>
+            </div>
+
+            <div class="table-container" th:if="${!#lists.isEmpty(products)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th class="num">Price</th>
+                        <th class="num">Stock</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${products}">
+                        <td>
+                            <div class="product-cell">
+                                <span class="product-thumb"
+                                      th:text="${#strings.toUpperCase(#strings.substring(product.name, 0, 2))}">PR</span>
+                                <div style="min-width:0">
+                                    <a class="table-link" th:href="@{/products/{id}(id=${product.id})}"
+                                       th:text="${product.name}">Name</a>
+                                    <span class="table-sub" th:text="${product.sku}">SKU</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td th:text="${product.category != null} ? ${product.category.name} : '—'">—</td>
+                        <td class="num" th:text="${fmt.money(product.sellingPrice)}">0.00</td>
+                        <td class="num">
+                            <span th:classappend="${product.lowStock} ? 'low'"
+                                  th:text="${product.stockQuantity}">0</span>
+                            <span class="table-sub" th:text="'min ' + ${product.minStockLevel}">min 0</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-archived" th:if="${product.archived}">Archived</span>
+                            <span class="badge badge-warning" th:if="${!product.archived and product.lowStock}">Low stock</span>
+                            <span class="badge badge-active" th:if="${!product.archived and !product.lowStock}">Active</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <a class="btn btn-small btn-secondary"
+                                   th:href="@{/products/{id}(id=${product.id})}">View</a>
+                                <a class="btn btn-small btn-secondary" th:if="${isOwner}"
+                                   th:href="@{/products/{id}/edit(id=${product.id})}">Edit</a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(products)}">
+                <strong>No products found</strong>
+                <span th:if="${q != null or categoryId != null or lowStock}">
+                    Nothing matches these filters. Try clearing them.
+                </span>
+                <span th:if="${q == null and categoryId == null and !lowStock}">
+                    Add your first product so sales can start.
+                </span>
+                <div style="margin-top:14px" th:if="${isOwner}">
+                    <a class="btn btn-primary" th:href="@{/products/new}">Add product</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
