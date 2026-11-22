@@ -6,7 +6,7 @@
  * from the database always go straight to the server, so no business data is
  * ever written into a cache and the app is not offered as an offline app.
  */
-const CACHE_NAME = "backtrack-static-v2";
+const CACHE_NAME = "backtrack-static-v3";
 
 const STATIC_FILES = [
     "/css/style.css",
@@ -15,6 +15,8 @@ const STATIC_FILES = [
     "/images/backtrack-logo.png",
     "/icons/icon-192.png",
     "/icons/icon-512.png",
+    "/icons/icon-maskable-512.png",
+    "/icons/apple-touch-icon.png",
     "/manifest.json"
 ];
 
