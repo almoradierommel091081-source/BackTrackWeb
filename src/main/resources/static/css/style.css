@@ -122,38 +122,65 @@ h1, h2, h3 {
 }
 
 .sidebar-logo {
-    display: block;
-    padding: 4px 10px 10px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 2px 8px 18px;
+    text-decoration: none;
 }
 
 .sidebar-logo .logo-image,
 .logo-image {
-    width: 132px;
-    height: auto;
+    width: 42px;
+    height: 42px;
     object-fit: contain;
     display: block;
+    flex: 0 0 42px;
+    filter: drop-shadow(0 8px 16px rgba(24, 98, 240, 0.42));
 }
 
-/* The logo artwork is navy, so it sits on a white plate in the sidebar. */
-.sidebar-logo .logo-image {
-    background: #fff;
-    border-radius: 12px;
-    padding: 8px 10px;
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
-.brand-text {
-    padding: 0 10px 22px;
-}
-
-.brand-text h2 {
+.logo-name {
     font-size: 19px;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
     color: #fff;
 }
 
+.logo-name .accent {
+    color: #3a9bff;
+}
+
+.logo-sub {
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.36em;
+    text-transform: uppercase;
+    color: #89a5c9;
+    margin-top: 5px;
+}
+
+.brand-text {
+    padding: 0 10px 16px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(120, 156, 210, 0.14);
+}
+
+.brand-text h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #dbe7f8;
+}
+
 .brand-text span {
-    font-size: 12px;
-    color: #8ea2c4;
+    font-size: 11px;
+    color: #7d95b8;
 }
 
 .sidebar nav {
@@ -1864,9 +1891,7 @@ input[type="checkbox"] {
         width: 30px;
         height: 30px;
         object-fit: contain;
-        background: #fff;
-        border-radius: 8px;
-        padding: 2px;
+        filter: drop-shadow(0 4px 10px rgba(24, 98, 240, 0.4));
     }
 
     .mobile-bar .mobile-brand strong {
@@ -2257,9 +2282,13 @@ input[type="checkbox"] {
 }
 
 .error-card img {
-    width: 118px;
-    margin: 0 auto 12px;
+    width: 108px;
+    margin: 0 auto 14px;
     display: block;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: linear-gradient(150deg, #12294c, #081226);
+    box-shadow: 0 12px 26px rgba(8, 18, 38, 0.18);
 }
 
 .error-code {

@@ -68,6 +68,37 @@
 
 
     /* ============================================================
+       1b. Show / hide the password on the sign-in screen
+       ============================================================ */
+
+    (function passwordToggle() {
+        var button = document.getElementById("toggle-password");
+        var input = document.getElementById("password");
+        if (!button || !input) {
+            return;
+        }
+
+        var open = '<path d="M2.2 12S5.6 5.8 12 5.8 21.8 12 21.8 12 18.4 18.2 12 18.2 2.2 12 2.2 12Z"/>'
+            + '<circle cx="12" cy="12" r="3.1"/>';
+        var closed = '<path d="M3 4.5l18 15"/>'
+            + '<path d="M9.9 5.2A9.9 9.9 0 0 1 12 5.8c6.4 0 9.8 6.2 9.8 6.2a17.6 17.6 0 0 1-3.4 4"/>'
+            + '<path d="M6.4 7.1A17.2 17.2 0 0 0 2.2 12S5.6 18.2 12 18.2a9.6 9.6 0 0 0 3.4-.6"/>'
+            + '<path d="M10 10a2.8 2.8 0 0 0 3.9 3.9"/>';
+
+        button.addEventListener("click", function () {
+            var show = input.type === "password";
+            input.type = show ? "text" : "password";
+            button.classList.toggle("is-visible", show);
+            button.setAttribute("aria-label", show ? "Hide password" : "Show password");
+            button.setAttribute("aria-pressed", show ? "true" : "false");
+            button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+                + 'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+                + (show ? closed : open) + "</svg>";
+        });
+    })();
+
+
+    /* ============================================================
        2. Sales overview chart
        ============================================================ */
 
