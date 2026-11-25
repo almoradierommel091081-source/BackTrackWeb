@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -21,11 +22,16 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "products")
-public class Product {
+public class Product extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Optimistic lock used to detect a conflicting edit from another device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, unique = true, length = 40)
     private String sku;
@@ -84,6 +90,10 @@ public class Product {
     /** Worth of the stock on hand at selling price. */
     public BigDecimal getStockRetailValue() {
         return sellingPrice.multiply(BigDecimal.valueOf(stockQuantity));
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Long getId() {

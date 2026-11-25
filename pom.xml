@@ -60,6 +60,18 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Versioned schema changes. The schema is no longer created by
+             Hibernate: db/migration holds the history, so a second database
+             engine (the future local SQLite store) can be kept in step. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf-test</artifactId>

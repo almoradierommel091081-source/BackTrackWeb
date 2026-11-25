@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -20,11 +21,16 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "customers")
-public class Customer {
+public class Customer extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Optimistic lock used to detect a conflicting edit from another device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @NotBlank(message = "Customer name is required")
     @Size(max = 120, message = "Name is too long")
@@ -63,6 +69,10 @@ public class Customer {
     @PreUpdate
     void onUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Long getId() {

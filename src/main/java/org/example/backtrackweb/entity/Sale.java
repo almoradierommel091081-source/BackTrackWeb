@@ -14,7 +14,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -26,11 +28,16 @@ import java.util.List;
  */
 @Entity
 @Table(name = "sales")
-public class Sale {
+public class Sale extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Optimistic lock used to detect a conflicting change from another device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, unique = true, length = 30)
     private String saleNumber;
@@ -80,6 +87,9 @@ public class Sale {
 
     private Instant cancelledAt;
 
+    /** Set whenever the sale changes after creation (payment recorded, cancelled). */
+    private Instant updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cancelled_by")
     private User cancelledBy;
@@ -98,6 +108,12 @@ public class Sale {
     @PrePersist
     void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 
     public void addItem(SaleItem item) {
@@ -116,6 +132,10 @@ public class Sale {
 
     public int getTotalQuantity() {
         return items.stream().mapToInt(SaleItem::getQuantity).sum();
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Long getId() {
@@ -220,6 +240,10 @@ public class Sale {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 
     public Instant getCancelledAt() {

@@ -6,17 +6,23 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * A group of products (e.g. Beverages, Hardware, School Supplies).
  */
 @Entity
 @Table(name = "product_categories")
-public class ProductCategory {
+public class ProductCategory extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Optimistic lock used to detect a conflicting edit from another device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, unique = true, length = 80)
     private String name;
@@ -26,6 +32,10 @@ public class ProductCategory {
 
     public ProductCategory(String name) {
         this.name = name;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Long getId() {

@@ -21,7 +21,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "stock_movements")
-public class StockMovement {
+public class StockMovement extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

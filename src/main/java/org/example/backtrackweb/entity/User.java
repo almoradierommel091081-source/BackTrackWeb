@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 
@@ -19,11 +20,16 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends SyncableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Optimistic lock used to detect a conflicting edit from another device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
@@ -63,6 +69,10 @@ public class User {
     @PreUpdate
     void onUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Long getId() {
