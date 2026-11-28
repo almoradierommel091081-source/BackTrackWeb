@@ -1,28 +1,18 @@
 # syntax=docker/dockerfile:1
 
 # ---------- build stage ----------
-FROM eclipse-temurin:21-jdk-jammy AS build
+# The official Maven image provides Maven 3.9.16 on Eclipse Temurin JDK 21, so
+# the build does not use the Maven Wrapper: mvnw could not download Maven in
+# Render's build environment.
+FROM maven:3.9.16-eclipse-temurin-21 AS build
 WORKDIR /build
 
-# The Maven Wrapper is configured with distributionType=only-script, so mvnw
-# downloads and unpacks Apache Maven 3.9.16 itself: curl for the download and
-# unzip because the distribution is distributed as a .zip.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl unzip ca-certificates \
- && rm -rf /var/lib/apt/lists/*
-
-# Wrapper and POM first, so dependency downloads stay cached when only src/ changes.
-COPY mvnw ./
-COPY .mvn .mvn
 COPY pom.xml ./
-RUN chmod +x mvnw \
- && ./mvnw -B dependency:go-offline
-
 COPY src ./src
 
 # Tests are skipped here on purpose: they need an embedded PostgreSQL that
 # downloads database binaries, and CI already runs "./mvnw -B verify".
-RUN ./mvnw -B -DskipTests package
+RUN mvn -B -DskipTests package
 
 # ---------- runtime stage ----------
 FROM eclipse-temurin:21-jre-jammy AS runtime
