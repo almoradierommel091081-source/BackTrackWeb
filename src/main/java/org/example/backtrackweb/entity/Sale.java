@@ -39,7 +39,9 @@ public class Sale extends SyncableEntity {
     @Column(nullable = false)
     private long version;
 
-    @Column(nullable = false, unique = true, length = 30)
+    // Unique inside its own business, not across the database: the per-business
+    // index ux_sales_business_sale_number (business_id, sale_number) enforces it.
+    @Column(nullable = false, length = 30)
     private String saleNumber;
 
     /** Null means a walk-in customer. */
@@ -81,6 +83,14 @@ public class Sale extends SyncableEntity {
 
     @Column(length = 500)
     private String notes;
+
+    /**
+     * True when this sale arrived by synchronization and the stock it needed
+     * was not available, so stock went negative and an inventory discrepancy
+     * was recorded for review.
+     */
+    @Column(nullable = false)
+    private boolean stockConflict = false;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -244,6 +254,14 @@ public class Sale extends SyncableEntity {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public boolean isStockConflict() {
+        return stockConflict;
+    }
+
+    public void setStockConflict(boolean stockConflict) {
+        this.stockConflict = stockConflict;
     }
 
     public Instant getCancelledAt() {

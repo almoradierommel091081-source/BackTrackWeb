@@ -2,18 +2,20 @@ package org.example.backtrackweb.config;
 
 import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.repository.UserRepository;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.example.backtrackweb.tenant.TenantUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 /**
  * Tells Spring Security how to find an account and what role it has.
  * Deactivated accounts are reported as disabled, so they cannot log in.
+ *
+ * <p>The principal carries the account's business, which is where every request
+ * gets its tenant from. Usernames are globally unique, so this lookup is the
+ * one place that runs before a tenant exists.
  */
 @Service
 public class AppUserDetailsService implements UserDetailsService {
@@ -30,11 +32,6 @@ public class AppUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("No account named " + username));
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
-                .disabled(!user.isActive())
-                .build();
+        return new TenantUserDetails(user);
     }
 }

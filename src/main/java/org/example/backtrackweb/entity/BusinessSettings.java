@@ -6,22 +6,29 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import org.example.backtrackweb.tenant.TenantContext;
 
 import java.time.Instant;
 
 /**
- * The single row of business information used across the app and on receipts.
- * Every business that uses BackTrack edits this instead of the source code.
+ * The business information used across the app and on receipts.
+ *
+ * <p>There is exactly one row per business. The primary key is the business id
+ * itself, so the existing row (business 1, id 1) keeps working unchanged while
+ * a second business can have its own settings.
  */
 @Entity
 @Table(name = "business_settings")
-public class BusinessSettings {
-
-    /** Fixed id: there is only ever one settings row. */
-    private static final Long SINGLETON_ID = 1L;
+public class BusinessSettings extends SyncableEntity {
 
     @Id
-    private Long id = SINGLETON_ID;
+    private Long id;
+
+    /** Optimistic lock used to detect a conflicting settings edit from a device. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, length = 150)
     private String businessName = "My Business";
@@ -54,12 +61,18 @@ public class BusinessSettings {
     @PrePersist
     @PreUpdate
     void onUpdate() {
-        this.id = SINGLETON_ID;
+        // The row belongs to the business bound to this request; its id is that
+        // business, which keeps the pre-existing row (id = 1) valid.
+        this.id = TenantContext.require();
         this.updatedAt = Instant.now();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public String getBusinessName() {

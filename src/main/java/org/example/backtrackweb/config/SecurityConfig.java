@@ -13,6 +13,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.example.backtrackweb.sync.security.DeviceAuthFilter;
 
 /**
  * Login, logout and role rules.
@@ -57,9 +59,11 @@ public class SecurityConfig {
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+                                                      DeviceAuthFilter deviceAuthFilter) throws Exception {
         http
                 .securityMatcher("/api/**")
+                .addFilterBefore(deviceAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.disable())
@@ -68,6 +72,9 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/ping").permitAll()
+                        // A brand new device has no token yet; it registers with
+                        // an account password and receives one.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/devices/register").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, ex) -> {

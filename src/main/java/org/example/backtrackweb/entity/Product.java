@@ -33,7 +33,9 @@ public class Product extends SyncableEntity {
     @Column(nullable = false)
     private long version;
 
-    @Column(nullable = false, unique = true, length = 40)
+    // Unique inside its own business, not across the database: the per-business
+    // index ux_products_business_sku (business_id, sku) is what enforces it.
+    @Column(nullable = false, length = 40)
     private String sku;
 
     @Column(nullable = false, length = 150)

@@ -7,6 +7,7 @@ import org.example.backtrackweb.repository.CustomerRepository;
 import org.example.backtrackweb.repository.ProductRepository;
 import org.example.backtrackweb.repository.SaleRepository;
 import org.example.backtrackweb.repository.UserRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +60,7 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public Stats stats() {
+        Long businessId = TenantContext.require();
         ZoneId zone = ZoneId.systemDefault();
         LocalDate today = LocalDate.now(zone);
         Instant startOfToday = today.atStartOfDay(zone).toInstant();
@@ -68,29 +70,30 @@ public class DashboardService {
         Instant startOfMonth = today.withDayOfMonth(1).atStartOfDay(zone).toInstant();
 
         return new Stats(
-                productRepository.countByArchivedFalse(),
-                customerRepository.countByArchivedFalse(),
-                saleRepository.count(),
-                saleRepository.countByStatus(SaleStatus.COMPLETED),
-                saleRepository.countByStatus(SaleStatus.CANCELLED),
-                saleRepository.countByCreatedAtGreaterThanEqual(startOfToday),
-                productRepository.countLowStock(),
-                userRepository.countByRoleAndActiveTrue(org.example.backtrackweb.entity.Role.EMPLOYEE),
-                saleRepository.sumRevenue(SaleStatus.CANCELLED),
-                saleRepository.sumRevenueBetween(startOfToday, startOfTomorrow, SaleStatus.CANCELLED),
-                saleRepository.sumRevenueBetween(startOfWeek, startOfTomorrow, SaleStatus.CANCELLED),
-                saleRepository.sumRevenueBetween(startOfMonth, startOfTomorrow, SaleStatus.CANCELLED),
-                saleRepository.sumCollectedBetween(startOfMonth, startOfTomorrow, SaleStatus.CANCELLED)
+                productRepository.countByArchivedFalseAndBusinessId(businessId),
+                customerRepository.countByArchivedFalseAndBusinessId(businessId),
+                saleRepository.countByBusinessId(businessId),
+                saleRepository.countByBusinessIdAndStatus(businessId, SaleStatus.COMPLETED),
+                saleRepository.countByBusinessIdAndStatus(businessId, SaleStatus.CANCELLED),
+                saleRepository.countByBusinessIdAndCreatedAtGreaterThanEqual(businessId, startOfToday),
+                productRepository.countLowStock(businessId),
+                userRepository.countByRoleAndActiveTrueAndBusinessId(
+                        org.example.backtrackweb.entity.Role.EMPLOYEE, businessId),
+                saleRepository.sumRevenue(businessId, SaleStatus.CANCELLED),
+                saleRepository.sumRevenueBetween(businessId, startOfToday, startOfTomorrow, SaleStatus.CANCELLED),
+                saleRepository.sumRevenueBetween(businessId, startOfWeek, startOfTomorrow, SaleStatus.CANCELLED),
+                saleRepository.sumRevenueBetween(businessId, startOfMonth, startOfTomorrow, SaleStatus.CANCELLED),
+                saleRepository.sumCollectedBetween(businessId, startOfMonth, startOfTomorrow, SaleStatus.CANCELLED)
         );
     }
 
     @Transactional(readOnly = true)
     public List<Product> lowStockProducts() {
-        return productRepository.findLowStock();
+        return productRepository.findLowStock(TenantContext.require());
     }
 
     @Transactional(readOnly = true)
     public List<Sale> recentSales() {
-        return saleRepository.findTop5ByOrderByCreatedAtDesc();
+        return saleRepository.findTop5ByBusinessIdOrderByCreatedAtDesc(TenantContext.require());
     }
 }

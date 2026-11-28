@@ -12,31 +12,45 @@ import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Products, always scoped to one business. Every finder takes the business id
+ * so a caller cannot read across tenants.
+ */
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
-    Optional<Product> findBySkuIgnoreCase(String sku);
+    Optional<Product> findByIdAndBusinessId(Long id, Long businessId);
 
-    boolean existsBySkuIgnoreCase(String sku);
+    Optional<Product> findByUuidAndBusinessId(String uuid, Long businessId);
 
-    List<Product> findByArchivedFalseOrderByNameAsc();
+    Optional<Product> findBySkuIgnoreCaseAndBusinessId(String sku, Long businessId);
 
-    long countByArchivedFalse();
+    boolean existsBySkuIgnoreCaseAndBusinessId(String sku, Long businessId);
+
+    List<Product> findByArchivedFalseAndBusinessIdOrderByNameAsc(Long businessId);
+
+    long countByArchivedFalseAndBusinessId(Long businessId);
 
     /**
      * Locks the product row until the current transaction finishes.
      * This is what stops two cashiers from selling the same last item twice.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select p from Product p where p.id = :id")
-    Optional<Product> findByIdForUpdate(@Param("id") Long id);
+    @Query("select p from Product p where p.id = :id and p.businessId = :businessId")
+    Optional<Product> findByIdForUpdateAndBusinessId(@Param("id") Long id,
+                                                     @Param("businessId") Long businessId);
 
     @Query("""
             select p from Product p
-            where p.archived = false and p.stockQuantity <= p.minStockLevel
+            where p.businessId = :businessId and p.archived = false
+              and p.stockQuantity <= p.minStockLevel
             order by p.stockQuantity asc, p.name asc
             """)
-    List<Product> findLowStock();
+    List<Product> findLowStock(@Param("businessId") Long businessId);
 
-    @Query("select count(p) from Product p where p.archived = false and p.stockQuantity <= p.minStockLevel")
-    long countLowStock();
+    @Query("""
+            select count(p) from Product p
+            where p.businessId = :businessId and p.archived = false
+              and p.stockQuantity <= p.minStockLevel
+            """)
+    long countLowStock(@Param("businessId") Long businessId);
 }

@@ -7,6 +7,7 @@ import org.example.backtrackweb.exception.BusinessException;
 import org.example.backtrackweb.exception.NotFoundException;
 import org.example.backtrackweb.repository.CustomerRepository;
 import org.example.backtrackweb.repository.SaleRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * Customer management: search, create, edit, archive.
  * Customers are never deleted, only archived, so sales keep their history.
+ * Every query is scoped to the business bound to the request.
  */
 @Service
 public class CustomerService {
@@ -29,10 +31,16 @@ public class CustomerService {
         this.saleRepository = saleRepository;
     }
 
+    private Long tenant() {
+        return TenantContext.require();
+    }
+
     @Transactional(readOnly = true)
     public List<Customer> search(String query, boolean includeArchived) {
+        Long businessId = tenant();
         Specification<Customer> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("businessId"), businessId));
             if (!includeArchived) {
                 predicates.add(cb.isFalse(root.get("archived")));
             }
@@ -52,24 +60,30 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public List<Customer> findActive() {
-        return repository.findByArchivedFalseOrderByNameAsc();
+        return repository.findByArchivedFalseAndBusinessIdOrderByNameAsc(tenant());
     }
 
     @Transactional(readOnly = true)
     public Customer get(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndBusinessId(id, tenant())
+                .orElseThrow(() -> new NotFoundException("Customer not found."));
+    }
+
+    @Transactional(readOnly = true)
+    public Customer getByUuid(String uuid) {
+        return repository.findByUuidAndBusinessId(uuid, tenant())
                 .orElseThrow(() -> new NotFoundException("Customer not found."));
     }
 
     @Transactional(readOnly = true)
     public List<Sale> history(Long customerId) {
         get(customerId);
-        return saleRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+        return saleRepository.findByCustomerIdAndBusinessIdOrderByCreatedAtDesc(customerId, tenant());
     }
 
     @Transactional(readOnly = true)
     public long countActive() {
-        return repository.countByArchivedFalse();
+        return repository.countByArchivedFalseAndBusinessId(tenant());
     }
 
     @Transactional
@@ -105,7 +119,7 @@ public class CustomerService {
         }
         String phone = trimToNull(form.getPhone());
         if (phone != null) {
-            repository.findByPhone(phone)
+            repository.findByPhoneAndBusinessId(phone, tenant())
                     .filter(existing -> !existing.getId().equals(currentId))
                     .ifPresent(existing -> {
                         throw new BusinessException(

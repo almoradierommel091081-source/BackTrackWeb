@@ -13,11 +13,13 @@ import org.example.backtrackweb.entity.Product;
 import org.example.backtrackweb.entity.Sale;
 import org.example.backtrackweb.entity.SaleItem;
 import org.example.backtrackweb.entity.SaleStatus;
+import org.example.backtrackweb.entity.StockMovement;
 import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.exception.BusinessException;
 import org.example.backtrackweb.exception.NotFoundException;
 import org.example.backtrackweb.repository.ProductRepository;
 import org.example.backtrackweb.repository.SaleRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +39,15 @@ import java.util.TreeMap;
  * Everything about sales: creating them (with stock deduction), searching,
  * recording payments and cancelling (with stock restoration).
  *
- * All stock work happens inside one database transaction, so a sale is either
+ * <p>All stock work happens inside one database transaction, so a sale is either
  * saved completely - stock deducted and receipt number used - or not at all.
+ *
+ * <p>Two entry points exist. The web point of sale refuses to sell more than is
+ * in stock. Synchronization uses {@link #createSaleFromSync}, which accepts the
+ * sale because the money was already taken offline and records the shortage for
+ * the owner to review.
+ *
+ * <p>Every query is scoped to the business bound to the request.
  */
 @Service
 public class SaleService {
@@ -48,21 +57,44 @@ public class SaleService {
     private final CustomerService customerService;
     private final InventoryService inventoryService;
     private final NumberSequenceService numberSequenceService;
+    private final InventoryDiscrepancyService discrepancyService;
 
     public SaleService(SaleRepository saleRepository,
                        ProductRepository productRepository,
                        CustomerService customerService,
                        InventoryService inventoryService,
-                       NumberSequenceService numberSequenceService) {
+                       NumberSequenceService numberSequenceService,
+                       InventoryDiscrepancyService discrepancyService) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
         this.customerService = customerService;
         this.inventoryService = inventoryService;
         this.numberSequenceService = numberSequenceService;
+        this.discrepancyService = discrepancyService;
+    }
+
+    private Long tenant() {
+        return TenantContext.require();
     }
 
     @Transactional
     public Sale createSale(SaleForm form, User cashier) {
+        return buildSale(form, cashier, numberSequenceService.nextSaleNumber(tenant()), null, false);
+    }
+
+    /**
+     * Creates a sale that was completed on a device while offline.
+     *
+     * @param saleNumber receipt number issued inside a lease owned by the device
+     * @param uuid       the client generated identity of the sale
+     */
+    @Transactional
+    public Sale createSaleFromSync(SaleForm form, User cashier, String saleNumber, String uuid) {
+        return buildSale(form, cashier, saleNumber, uuid, true);
+    }
+
+    private Sale buildSale(SaleForm form, User cashier, String saleNumber, String uuid,
+                           boolean allowNegativeStock) {
         if (form.getItems() == null || form.getItems().isEmpty()) {
             throw new BusinessException("Add at least one product to the sale.");
         }
@@ -89,20 +121,23 @@ public class SaleService {
         }
 
         Sale sale = new Sale();
-        sale.setSaleNumber(numberSequenceService.nextSaleNumber());
+        sale.setSaleNumber(saleNumber);
+        if (uuid != null) {
+            sale.setUuid(uuid);
+        }
         sale.setCashier(cashier);
         sale.setCustomer(customer);
         sale.setPaymentMethod(form.getPaymentMethod());
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (Map.Entry<Long, Integer> entry : quantities.entrySet()) {
-            Product product = productRepository.findByIdForUpdate(entry.getKey())
+            Product product = productRepository.findByIdForUpdateAndBusinessId(entry.getKey(), tenant())
                     .orElseThrow(() -> new BusinessException("A product in this sale no longer exists."));
             if (product.isArchived()) {
                 throw new BusinessException(product.getName() + " is archived and cannot be sold.");
             }
             int quantity = entry.getValue();
-            if (product.getStockQuantity() < quantity) {
+            if (!allowNegativeStock && product.getStockQuantity() < quantity) {
                 throw new BusinessException("Not enough stock for " + product.getName()
                         + ". Available: " + product.getStockQuantity() + ", requested: " + quantity + ".");
             }
@@ -120,8 +155,19 @@ public class SaleService {
             item.setLineTotal(lineTotal);
             sale.addItem(item);
 
-            inventoryService.apply(product, -quantity, MovementType.SALE,
-                    "Sold on " + sale.getSaleNumber(), sale.getSaleNumber(), cashier);
+            if (allowNegativeStock) {
+                int expectedStock = product.getStockQuantity();
+                StockMovement movement = inventoryService.applyFromSync(product, -quantity, MovementType.SALE,
+                        "Sold on " + saleNumber, saleNumber, cashier);
+                if (movement.getResultingStock() < 0) {
+                    sale.setStockConflict(true);
+                    discrepancyService.record(product, expectedStock, movement.getResultingStock(),
+                            -quantity, uuid, movement.getUuid());
+                }
+            } else {
+                inventoryService.apply(product, -quantity, MovementType.SALE,
+                        "Sold on " + sale.getSaleNumber(), sale.getSaleNumber(), cashier);
+            }
         }
 
         BigDecimal discount = form.getDiscountAmount() == null ? BigDecimal.ZERO : form.getDiscountAmount();
@@ -207,7 +253,8 @@ public class SaleService {
         }
 
         for (SaleItem item : sale.getItems()) {
-            Product product = productRepository.findByIdForUpdate(item.getProduct().getId())
+            Product product = productRepository.findByIdForUpdateAndBusinessId(
+                            item.getProduct().getId(), tenant())
                     .orElseThrow(() -> new BusinessException("Product no longer exists."));
             inventoryService.apply(product, item.getQuantity(), MovementType.CANCELLATION,
                     "Restored from cancelled sale " + sale.getSaleNumber(),
@@ -238,14 +285,20 @@ public class SaleService {
 
     @Transactional(readOnly = true)
     public Sale get(Long id) {
-        return saleRepository.findById(id)
+        return saleRepository.findByIdAndBusinessId(id, tenant())
+                .orElseThrow(() -> new NotFoundException("Transaction not found."));
+    }
+
+    @Transactional(readOnly = true)
+    public Sale getByUuid(String uuid) {
+        return saleRepository.findByUuidAndBusinessId(uuid, tenant())
                 .orElseThrow(() -> new NotFoundException("Transaction not found."));
     }
 
     /** Loads a sale with its items, payments, customer and cashier ready to display. */
     @Transactional(readOnly = true)
     public Sale getDetailed(Long id) {
-        Sale sale = saleRepository.findDetailedById(id)
+        Sale sale = saleRepository.findDetailedByIdAndBusinessId(id, tenant())
                 .orElseThrow(() -> new NotFoundException("Transaction not found."));
         sale.getItems().size();
         sale.getPayments().size();
@@ -254,7 +307,7 @@ public class SaleService {
 
     @Transactional(readOnly = true)
     public Sale getByNumber(String saleNumber) {
-        return saleRepository.findBySaleNumber(saleNumber)
+        return saleRepository.findBySaleNumberAndBusinessId(saleNumber, tenant())
                 .orElseThrow(() -> new NotFoundException("Transaction not found."));
     }
 
@@ -263,9 +316,11 @@ public class SaleService {
         ZoneId zone = ZoneId.systemDefault();
         Instant fromInstant = from == null ? null : from.atStartOfDay(zone).toInstant();
         Instant toInstant = to == null ? null : to.plusDays(1).atStartOfDay(zone).toInstant();
+        Long businessId = tenant();
 
         Specification<Sale> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("businessId"), businessId));
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
@@ -291,7 +346,7 @@ public class SaleService {
 
     @Transactional(readOnly = true)
     public List<Sale> recent() {
-        return saleRepository.findTop5ByOrderByCreatedAtDesc();
+        return saleRepository.findTop5ByBusinessIdOrderByCreatedAtDesc(tenant());
     }
 
     @Transactional(readOnly = true)

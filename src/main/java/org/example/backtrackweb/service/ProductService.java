@@ -11,6 +11,7 @@ import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.exception.BusinessException;
 import org.example.backtrackweb.exception.NotFoundException;
 import org.example.backtrackweb.repository.ProductRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,8 @@ import java.util.List;
 
 /**
  * Product and inventory management. Stock is only changed through
- * {@link InventoryService}, never by editing a product.
+ * {@link InventoryService}, never by editing a product. Every query is scoped
+ * to the business bound to the request.
  */
 @Service
 public class ProductService {
@@ -38,10 +40,16 @@ public class ProductService {
         this.categoryService = categoryService;
     }
 
+    private Long tenant() {
+        return TenantContext.require();
+    }
+
     @Transactional(readOnly = true)
     public List<Product> search(String query, Long categoryId, boolean lowStockOnly, boolean includeArchived) {
+        Long businessId = tenant();
         Specification<Product> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("businessId"), businessId));
             if (!includeArchived) {
                 predicates.add(cb.isFalse(root.get("archived")));
             }
@@ -66,28 +74,34 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<Product> findActive() {
-        return repository.findByArchivedFalseOrderByNameAsc();
+        return repository.findByArchivedFalseAndBusinessIdOrderByNameAsc(tenant());
     }
 
     @Transactional(readOnly = true)
     public Product get(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndBusinessId(id, tenant())
+                .orElseThrow(() -> new NotFoundException("Product not found."));
+    }
+
+    @Transactional(readOnly = true)
+    public Product getByUuid(String uuid) {
+        return repository.findByUuidAndBusinessId(uuid, tenant())
                 .orElseThrow(() -> new NotFoundException("Product not found."));
     }
 
     @Transactional(readOnly = true)
     public List<Product> lowStock() {
-        return repository.findLowStock();
+        return repository.findLowStock(tenant());
     }
 
     @Transactional(readOnly = true)
     public long countLowStock() {
-        return repository.countLowStock();
+        return repository.countLowStock(tenant());
     }
 
     @Transactional(readOnly = true)
     public long countActive() {
-        return repository.countByArchivedFalse();
+        return repository.countByArchivedFalseAndBusinessId(tenant());
     }
 
     @Transactional(readOnly = true)
@@ -99,7 +113,7 @@ public class ProductService {
     @Transactional
     public Product create(ProductForm form, User performedBy) {
         String sku = form.getSku().trim();
-        if (repository.existsBySkuIgnoreCase(sku)) {
+        if (repository.existsBySkuIgnoreCaseAndBusinessId(sku, tenant())) {
             throw new BusinessException("A product with SKU " + sku + " already exists.");
         }
         Product product = new Product();
@@ -119,14 +133,14 @@ public class ProductService {
             inventoryService.apply(product, opening, MovementType.OPENING,
                     "Opening stock entered when the product was created", null, performedBy);
         }
-        return repository.findById(product.getId()).orElse(product);
+        return repository.findByIdAndBusinessId(product.getId(), tenant()).orElse(product);
     }
 
     @Transactional
     public Product update(Long id, ProductForm form) {
         Product product = get(id);
         String sku = form.getSku().trim();
-        repository.findBySkuIgnoreCase(sku)
+        repository.findBySkuIgnoreCaseAndBusinessId(sku, tenant())
                 .filter(other -> !other.getId().equals(product.getId()))
                 .ifPresent(other -> {
                     throw new BusinessException("A product with SKU " + sku + " already exists.");

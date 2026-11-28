@@ -4,14 +4,15 @@ import org.example.backtrackweb.entity.ProductCategory;
 import org.example.backtrackweb.exception.BusinessException;
 import org.example.backtrackweb.exception.NotFoundException;
 import org.example.backtrackweb.repository.ProductCategoryRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * Product categories. Categories are shared lists, so they are kept small and
- * simple: add, rename, delete when unused.
+ * Product categories. Categories are shared lists inside one business: add,
+ * rename, delete when unused.
  */
 @Service
 public class CategoryService {
@@ -22,14 +23,24 @@ public class CategoryService {
         this.repository = repository;
     }
 
+    private Long tenant() {
+        return TenantContext.require();
+    }
+
     @Transactional(readOnly = true)
     public List<ProductCategory> findAll() {
-        return repository.findAllByOrderByNameAsc();
+        return repository.findAllByBusinessIdOrderByNameAsc(tenant());
     }
 
     @Transactional(readOnly = true)
     public ProductCategory get(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndBusinessId(id, tenant())
+                .orElseThrow(() -> new NotFoundException("Category not found."));
+    }
+
+    @Transactional(readOnly = true)
+    public ProductCategory getByUuid(String uuid) {
+        return repository.findByUuidAndBusinessId(uuid, tenant())
                 .orElseThrow(() -> new NotFoundException("Category not found."));
     }
 
@@ -39,7 +50,7 @@ public class CategoryService {
         if (name.isBlank()) {
             throw new BusinessException("Category name is required.");
         }
-        if (repository.existsByNameIgnoreCase(name)) {
+        if (repository.existsByNameIgnoreCaseAndBusinessId(name, tenant())) {
             throw new BusinessException("That category already exists.");
         }
         return repository.save(new ProductCategory(name));

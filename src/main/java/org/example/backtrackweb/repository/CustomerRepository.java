@@ -9,11 +9,13 @@ import java.util.Optional;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
 
-    List<Customer> findByArchivedFalseOrderByNameAsc();
+    Optional<Customer> findByIdAndBusinessId(Long id, Long businessId);
 
-    long countByArchivedFalse();
+    Optional<Customer> findByUuidAndBusinessId(String uuid, Long businessId);
 
-    Optional<Customer> findByPhone(String phone);
+    List<Customer> findByArchivedFalseAndBusinessIdOrderByNameAsc(Long businessId);
 
-    Optional<Customer> findByNameIgnoreCaseAndPhone(String name, String phone);
+    long countByArchivedFalseAndBusinessId(Long businessId);
+
+    Optional<Customer> findByPhoneAndBusinessId(String phone, Long businessId);
 }

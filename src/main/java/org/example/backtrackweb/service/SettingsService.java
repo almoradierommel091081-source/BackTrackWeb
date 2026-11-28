@@ -2,14 +2,15 @@ package org.example.backtrackweb.service;
 
 import org.example.backtrackweb.entity.BusinessSettings;
 import org.example.backtrackweb.repository.BusinessSettingsRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
 /**
- * Reads and saves the single business settings row, creating sensible
- * defaults the first time the system runs.
+ * Reads and saves the settings row of the current business, creating sensible
+ * defaults the first time that business runs.
  */
 @Service
 public class SettingsService {
@@ -22,7 +23,9 @@ public class SettingsService {
 
     @Transactional
     public BusinessSettings get() {
-        return repository.findById(1L).orElseGet(() -> repository.save(new BusinessSettings()));
+        Long businessId = TenantContext.require();
+        return repository.findByBusinessId(businessId)
+                .orElseGet(() -> repository.save(new BusinessSettings()));
     }
 
     @Transactional

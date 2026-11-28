@@ -4,6 +4,7 @@ import org.example.backtrackweb.entity.Role;
 import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.repository.UserRepository;
 import org.example.backtrackweb.service.SettingsService;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,10 +50,20 @@ public class DataInitializer implements ApplicationRunner {
         this.settingsService = settingsService;
     }
 
+    /** The first business created by the baseline migration. */
+    private static final Long FIRST_BUSINESS_ID = 1L;
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        // Make sure the single business settings row exists.
+        // Startup runs without a request, so the first business is bound
+        // explicitly. Everything created here (settings, first owner) belongs
+        // to that business, and any other business is created later through the
+        // same tenant-scoped services.
+        TenantContext.runAs(FIRST_BUSINESS_ID, this::bootstrap);
+    }
+
+    private void bootstrap() {
         settingsService.get();
 
         if (userRepository.count() > 0) {

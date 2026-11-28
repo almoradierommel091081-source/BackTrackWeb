@@ -24,7 +24,9 @@ public class ProductCategory extends SyncableEntity {
     @Column(nullable = false)
     private long version;
 
-    @Column(nullable = false, unique = true, length = 80)
+    // Unique inside its own business, not across the database: the per-business
+    // index ux_product_categories_business_name (business_id, name) enforces it.
+    @Column(nullable = false, length = 80)
     private String name;
 
     public ProductCategory() {

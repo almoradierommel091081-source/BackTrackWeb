@@ -8,9 +8,13 @@ import java.util.Optional;
 
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
 
-    List<ProductCategory> findAllByOrderByNameAsc();
+    Optional<ProductCategory> findByIdAndBusinessId(Long id, Long businessId);
 
-    Optional<ProductCategory> findByNameIgnoreCase(String name);
+    Optional<ProductCategory> findByUuidAndBusinessId(String uuid, Long businessId);
 
-    boolean existsByNameIgnoreCase(String name);
+    List<ProductCategory> findAllByBusinessIdOrderByNameAsc(Long businessId);
+
+    Optional<ProductCategory> findByNameIgnoreCaseAndBusinessId(String name, Long businessId);
+
+    boolean existsByNameIgnoreCaseAndBusinessId(String name, Long businessId);
 }

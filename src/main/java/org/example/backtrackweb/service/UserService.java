@@ -7,6 +7,7 @@ import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.exception.BusinessException;
 import org.example.backtrackweb.exception.NotFoundException;
 import org.example.backtrackweb.repository.UserRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,10 @@ import java.util.List;
 /**
  * Account management: creating employees, editing them, deactivating them and
  * changing passwords. Passwords are always hashed with BCrypt.
+ *
+ * <p>Every account belongs to one business and is only visible inside it.
+ * Usernames stay globally unique (that is what the login page relies on), so
+ * the uniqueness check is deliberately not scoped.
  */
 @Service
 public class UserService {
@@ -28,26 +33,30 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    private Long tenant() {
+        return TenantContext.require();
+    }
+
     @Transactional(readOnly = true)
     public List<User> findAll() {
-        return repository.findAllByOrderByRoleAscFullNameAsc();
+        return repository.findAllByBusinessIdOrderByRoleAscFullNameAsc(tenant());
     }
 
     @Transactional(readOnly = true)
     public User get(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndBusinessId(id, tenant())
                 .orElseThrow(() -> new NotFoundException("User not found."));
     }
 
     @Transactional(readOnly = true)
     public User getByUsername(String username) {
-        return repository.findByUsernameIgnoreCase(username)
+        return repository.findByUsernameIgnoreCaseAndBusinessId(username, tenant())
                 .orElseThrow(() -> new NotFoundException("User not found."));
     }
 
     @Transactional(readOnly = true)
     public long countOwners() {
-        return repository.countByRoleAndActiveTrue(Role.OWNER);
+        return repository.countByRoleAndActiveTrueAndBusinessId(Role.OWNER, tenant());
     }
 
     @Transactional
@@ -80,7 +89,7 @@ public class UserService {
                 });
 
         boolean losesOwnerAccess = user.isOwner() && (form.getRole() != Role.OWNER || !form.isActive());
-        if (losesOwnerAccess && repository.countByRoleAndActiveTrue(Role.OWNER) <= 1) {
+        if (losesOwnerAccess && repository.countByRoleAndActiveTrueAndBusinessId(Role.OWNER, tenant()) <= 1) {
             throw new BusinessException("You cannot remove the last active owner account.");
         }
         if (user.getId().equals(actingUser.getId()) && !form.isActive()) {
@@ -108,7 +117,8 @@ public class UserService {
         if (user.getId().equals(actingUser.getId()) && !active) {
             throw new BusinessException("You cannot deactivate your own account.");
         }
-        if (!active && user.isOwner() && repository.countByRoleAndActiveTrue(Role.OWNER) <= 1) {
+        if (!active && user.isOwner()
+                && repository.countByRoleAndActiveTrueAndBusinessId(Role.OWNER, tenant()) <= 1) {
             throw new BusinessException("You cannot deactivate the last active owner account.");
         }
         user.setActive(active);

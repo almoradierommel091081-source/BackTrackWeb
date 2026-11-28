@@ -1,6 +1,7 @@
 package org.example.backtrackweb.controller;
 
 import org.example.backtrackweb.exception.NotFoundException;
+import org.example.backtrackweb.tenant.CrossTenantException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,17 @@ public class GlobalExceptionHandler {
                 ? "Your account is not allowed to do that."
                 : ex.getMessage());
         return "error/403";
+    }
+
+    /**
+     * A record of another business is answered exactly like a missing one, so
+     * the existence of other businesses is never confirmed.
+     */
+    @ExceptionHandler(CrossTenantException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String crossTenant(Model model) {
+        model.addAttribute("message", "That record could not be found.");
+        return "error/404";
     }
 
     @ExceptionHandler(NotFoundException.class)

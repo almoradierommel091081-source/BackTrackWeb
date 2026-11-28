@@ -7,6 +7,7 @@ import org.example.backtrackweb.entity.SaleStatus;
 import org.example.backtrackweb.repository.CustomerRepository;
 import org.example.backtrackweb.repository.ProductRepository;
 import org.example.backtrackweb.repository.SaleRepository;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,7 +134,8 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public InventoryReport inventoryReport() {
-        List<Product> products = productRepository.findByArchivedFalseOrderByNameAsc();
+        Long businessId = TenantContext.require();
+        List<Product> products = productRepository.findByArchivedFalseAndBusinessIdOrderByNameAsc(businessId);
         long units = 0;
         BigDecimal costValue = BigDecimal.ZERO;
         BigDecimal retailValue = BigDecimal.ZERO;
@@ -147,7 +149,7 @@ public class ReportService {
         return new InventoryReport(products, units,
                 costValue.setScale(2, RoundingMode.HALF_UP),
                 retailValue.setScale(2, RoundingMode.HALF_UP),
-                productRepository.findLowStock());
+                productRepository.findLowStock(businessId));
     }
 
     @Transactional(readOnly = true)
@@ -179,16 +181,18 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public long countCustomers() {
-        return customerRepository.countByArchivedFalse();
+        return customerRepository.countByArchivedFalseAndBusinessId(TenantContext.require());
     }
 
     private List<Sale> loadSales(LocalDate from, LocalDate to) {
+        Long businessId = TenantContext.require();
         ZoneId zone = ZoneId.systemDefault();
         var fromInstant = from.atStartOfDay(zone).toInstant();
         var toInstant = to.plusDays(1).atStartOfDay(zone).toInstant();
         List<Sale> sales = saleRepository.findAll((root, cq, cb) -> {
             cq.orderBy(cb.desc(root.get("createdAt")));
             return cb.and(
+                    cb.equal(root.get("businessId"), businessId),
                     cb.greaterThanOrEqualTo(root.get("createdAt"), fromInstant),
                     cb.lessThan(root.get("createdAt"), toInstant)
             );
