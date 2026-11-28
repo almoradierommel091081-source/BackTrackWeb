@@ -1,15 +1,19 @@
 package org.example.backtrackweb.web;
 
+import org.example.backtrackweb.entity.BusinessSettings;
 import org.example.backtrackweb.entity.Role;
 import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.support.PostgresTestBase;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -17,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 /**
  * Login, logout and the role rules that protect owner-only pages.
@@ -107,5 +112,48 @@ class SecurityRulesTest extends PostgresTestBase {
     void anonymousVisitorSeesTheLoginPage() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * Production truth: a real visitor arrives with no business bound, because
+     * there is no account yet to derive one from. The login page must render
+     * anyway, and the request must not leave a binding behind.
+     */
+    @Test
+    void anonymousLoginPageRendersWithoutATenant() throws Exception {
+        TenantContext.clear();
+
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("login"));
+
+        assertThat(TenantContext.isSet()).isFalse();
+    }
+
+    /**
+     * Reading settings creates the row when it is missing, so a public page
+     * must never reach that code path for a business the visitor did not log in to.
+     */
+    @Test
+    void anonymousLoginPageDoesNotCreateBusinessSettings() throws Exception {
+        TenantContext.clear();
+        long before = businessSettingsRepository.count();
+
+        mockMvc.perform(get("/login")).andExpect(status().isOk());
+
+        assertThat(businessSettingsRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    void authenticatedPagesStillReceiveTheirTenantSettings() throws Exception {
+        TenantContext.clear();
+
+        MvcResult result = mockMvc.perform(get("/dashboard").with(user("boss").roles("OWNER")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        BusinessSettings settings = (BusinessSettings) result.getModelAndView().getModel().get("settings");
+        assertThat(settings).isNotNull();
+        assertThat(settings.getBusinessId()).isEqualTo(1L);
     }
 }

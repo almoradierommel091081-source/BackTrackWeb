@@ -4,6 +4,7 @@ import org.example.backtrackweb.entity.BusinessSettings;
 import org.example.backtrackweb.entity.User;
 import org.example.backtrackweb.repository.UserRepository;
 import org.example.backtrackweb.service.SettingsService;
+import org.example.backtrackweb.tenant.TenantContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -49,7 +50,10 @@ public class GlobalModelAttributes {
 
     @ModelAttribute("settings")
     public BusinessSettings settings() {
-        return settingsService.get();
+        // Public pages (login, errors) are rendered before any account is known,
+        // so no business is bound: there is nothing tenant-scoped to read and the
+        // page must not create a settings row for a guessed business.
+        return TenantContext.isSet() ? settingsService.get() : null;
     }
 
     @ModelAttribute("fmt")
