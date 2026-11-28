@@ -10,9 +10,28 @@ WORKDIR /build
 COPY pom.xml ./
 COPY src ./src
 
+# Maven Central answers HTTP 429 under load in Render's build environment, so
+# route "central" through Google's Asia-Pacific Maven Central mirror. The
+# settings file is generated here, so the project needs no extra file.
+RUN mkdir -p /root/.m2 \
+ && printf '%s\n' \
+    '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"' \
+    '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+    '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' \
+    '  <mirrors>' \
+    '    <mirror>' \
+    '      <id>google-maven-central-asia</id>' \
+    '      <name>Google Maven Central Asia-Pacific mirror</name>' \
+    '      <url>https://maven-central-asia.storage-download.googleapis.com/maven2/</url>' \
+    '      <mirrorOf>central</mirrorOf>' \
+    '    </mirror>' \
+    '  </mirrors>' \
+    '</settings>' \
+    > /root/.m2/settings.xml
+
 # Tests are skipped here on purpose: they need an embedded PostgreSQL that
 # downloads database binaries, and CI already runs "./mvnw -B verify".
-RUN mvn -B -DskipTests package
+RUN mvn -s /root/.m2/settings.xml -B -DskipTests package
 
 # ---------- runtime stage ----------
 FROM eclipse-temurin:21-jre-jammy AS runtime
