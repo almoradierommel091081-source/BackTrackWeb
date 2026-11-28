@@ -1,0 +1,32 @@
+# Version control and local build output
+.git/
+target/
+
+# Local database backups, screenshots and rehearsal dumps - never part of the image
+artifacts/
+
+# Documentation and the planned desktop packaging notes
+desktop/
+*.md
+HELP.md
+
+# IDE metadata
+.idea/
+.vscode/
+.settings/
+*.iml
+.classpath
+.project
+.sts4-cache
+
+# CI configuration
+.github/
+
+# Local environment and log files
+.env
+.env.*
+*.log
+
+# The container definition itself is not needed inside the build context
+Dockerfile
+.dockerignore
